@@ -46,17 +46,25 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 ## Stack
 
-The following stack is deployed using the `docker-compose.yaml` file as per above.
+The following stack is deployed using one of the provided  `docker-compose-*.yaml` files as per above.
 
 - [ShadowTraffic](https://shadowtraffic.io)
+
 - [Apache Flink 1.20.2](https://nightlies.apache.org/flink/flink-docs-release-1.20/)                   
+
 - [Apache Flink CDC 3.5](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.5/)
-- [Python 3.13](https://www.python.org)
-- [Apache Fluss 0.8](https://fluss.apache.org)
+
+- [Apache Polaris 1.2.0](https://polaris.apache.org)
+
 - [Apache Iceberg 1.9.1](https://iceberg.apache.org)
-- MinIO 
+
+- [Apache Paimon 1.3.1.](https://paimon.apache.org)
+
+- [Apache Fluss 0.8](https://fluss.apache.org)
+
 - [PostgreSQL 12](https://www.postgresql.org)
-- [Apache Polaris 1.2.0]()
+
+- [MinIO](https://www.min.io) - Project has gone into Maintenance mode... 
 
 
 ## Data Products 
