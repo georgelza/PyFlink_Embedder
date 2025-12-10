@@ -2,6 +2,7 @@
 
 CREATE TABLE c_paimon.finflow.accountholders_embed (
      _id                           BIGINT
+    ,nationalid                    VARCHAR(16)
     ,firstname                     VARCHAR(100)
     ,lastname                      VARCHAR(100)
     ,dob                           VARCHAR(10)
@@ -21,6 +22,8 @@ CREATE TABLE c_paimon.finflow.accountholders_embed (
 
 CREATE TABLE c_paimon.finflow.transactions_embedded (
      _id                            BIGINT              NOT NULL
+    ,eventid                        VARCHAR(36)
+    ,transactionid                  VARCHAR(36)
     ,eventtime                      VARCHAR(30)
     ,direction                      VARCHAR(8)
     ,eventtype                      VARCHAR(10)

@@ -77,12 +77,13 @@ From were they will be CDC source into our Flink environment into Flink tables t
 ### 1. AccountHolders
 
 ```bash
-
-idNumber/PPS/SSN                                        => Random 16 Digits unique Number, excluded from embedding calc
+_id
+nationalid                                              => Random 16 Digits unique Number, excluded from embedding calc
     firstname
     lastname
     dob                                                 => YY/MM/DD   Min = current - 16yrs
     gender
+    children
     address                                             => Can we drive addresses chosen based on country via .env value
     {
         # Number Street
@@ -92,8 +93,6 @@ idNumber/PPS/SSN                                        => Random 16 Digits uniq
         Country
         Postal_code
     }
-    eMailAddress
-    MobilePhoneNumber
     accounts [
         # (1-5)                                         => .env driven
         Bank Account/s
@@ -115,7 +114,12 @@ idNumber/PPS/SSN                                        => Random 16 Digits uniq
             cardType (VISA/MasterCard/Amex/DinerClub)   => .env driven (PickList / or from PostgreSql Table of possible values)
             expDate                                     => Current mm/year - <.env driven # months>
     ]
-    embeddingVector                                     => To be Calculated, Account Holder profile model 
+    emailaddress
+    mobilephonenumber
+    embedding_vector                                     => To be Calculated, Account Holder profile model 
+    embedding_dimensions
+    embedding_timestamp
+    created_at
 
 ```
 
@@ -127,32 +131,53 @@ idNumber/PPS/SSN                                        => Random 16 Digits uniq
 
     eventId                                             => UUIDv7   Unique, excluded from embedding calc
     transactionid                                       => UUIDv7   Shared with Inbound, excluded from embedding calc
-        msgType                                         => .end driven (pick List)
+        eventtime                                       => "2023-07-31T12:59:02"
+        direction: outbound
+        eventtype
+        creationdate
+        accountholdernationalid
+        accountholderaccount                            => row
+        counterpartynationalid
+        counterpartyaccount                             => row
+        tenantid
+        fromid
+        accountagentid
+        fromfibranchid
+        accountnumber
+        toid
+        accountidcode
+        counterpartyagentid
+        tofibranchid
+        counterpartynumber
+        counterpartyidcode
         verificationresult                              => .end driven (pick List)
-        amount {
+        amount {                                        => row
             basecurrency                                => .env driven (pick List)
             basevalue
             roe                                         => .env driven 
             currency                                    => .env driven (pick List)
             value
         }
-        eventtime                                       => "2023-07-31T12:59:02"
-        direction: outbound
-        accountholder (A)                               => Payer
-            tenantid                                    => bicFi
-            fromid                                      => bicFI
-            Bank Account or Credit Card                 => random from account types
-            accountholder                               => Name Surname
-            accountid                                   => accountId
-        counterpartyaccountholder (B)                   => Payee
-            counterpartyagentid                         => bicFi
-            counterpartybranchid                        => branchId 
-            toid                                        => bicFi
-            Bank Account or Credit Card                 => random from card types
-            counterpartyaccountholder                   => Name Surname
-            counterpartyaccountid                       => accountId
-        embeddingvector                                 => To be Calculated
-```
+        msgType                                         => .end driven (pick List)
+        settlementclearingsystemcode
+        paymentclearingsystemreference
+        requestexecutiondate
+        settlementdate
+        destinationcountry
+        localinstrument
+        msgstatus
+        paymentmethod
+        settlementmethod
+        transactiontype
+        verificationresult
+        numberoftransactions
+        schemaversion
+        usercode
+        embeddingVector                                 => To be Calculated, transaction profile model 
+        embedding_dimensions
+        embedding_timestamp
+        created_at
+    ```
 
 ### Inbound Txn 
 
@@ -161,32 +186,53 @@ idNumber/PPS/SSN                                        => Random 16 Digits uniq
 ```bash
 
     eventId                                             => UUIDv7   Unique, excluded from embedding calc
-    transactionId                                       => UUIDv7   Shared with Outbound, excluded from embedding calc
-        msgType                                         => from Outbound
-        verificationResult                              => from Outbound
-        amount {                                        => from Outbound
-            baseCurrency
-            baseValue
-            RoE
-            currency
+    transactionid                                       => UUIDv7   Shared with Inbound, excluded from embedding calc
+        eventtime                                       => "2023-07-31T12:59:02"
+        direction: outbound
+        eventtype
+        creationdate
+        accountholdernationalid
+        accountholderaccount                            => row
+        counterpartynationalid
+        counterpartyaccount                             => row
+        tenantid
+        fromid
+        accountagentid
+        fromfibranchid
+        accountnumber
+        toid
+        accountidcode
+        counterpartyagentid
+        tofibranchid
+        counterpartynumber
+        counterpartyidcode
+        verificationresult                              => .end driven (pick List)
+        amount {                                        => row
+            basecurrency                                => .env driven (pick List)
+            basevalue
+            roe                                         => .env driven 
+            currency                                    => .env driven (pick List)
             value
         }
-        eventTime                                       => "2023-07-31T12:59:02"
-        direction: inbound
-        accountHolder (B)                               => Payee
-            tenantId
-            toId
-            Bank Account or Credit Card
-            accountHolder
-            accountId
-        counterpartyAccountHolder (A)                   => Payer
-            counterpartyAgentId                         => bicFi
-            counterPartyBranchId                        => branchId 
-            fromId                                      => bicFi
-            Bank Account or Credit Card                 => 
-            counterPartyAccountHolder                   => Name Surname
-            counterPartyAccountId                       => accountId
-        embeddingVector                                 => To be Calculated / fin model
+        msgType                                         => .end driven (pick List)
+        settlementclearingsystemcode
+        paymentclearingsystemreference
+        requestexecutiondate
+        settlementdate
+        destinationcountry
+        localinstrument
+        msgstatus
+        paymentmethod
+        settlementmethod
+        transactiontype
+        verificationresult
+        numberoftransactions
+        schemaversion
+        usercode
+        embeddingVector                                 => To be Calculated, transaction profile model 
+        embedding_dimensions
+        embedding_timestamp
+        created_at
 ```
 
 
