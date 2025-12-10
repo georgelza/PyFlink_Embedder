@@ -1,0 +1,222 @@
+
+configs:
+
+  postgres_conf:
+    file: conf/postgresql.conf
+  postgres_hba:
+    file: conf/pg_hba.conf
+
+services:
+
+  ################################################################################
+  # Polaris REST based Catalog for Iceberg objects, can also be used using generic_tables
+  # for other non Iceberg objects
+  # Order and health are critical
+  # postgrescat & minio first, then polaris-bootstrap, polaris, followed by polaris-setup
+  ################################################################################
+  polaris:
+    image: apache/polaris:latest
+    hostname: polaris
+    container_name: polaris
+    depends_on:
+      postgrescat:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      polaris-bootstrap:
+        condition: service_completed_successfully
+
+    ports:
+      # API port
+      - "8181:8181"
+      # Management port (metrics and health checks)
+      - "8182:8182"
+      # Optional, allows attaching a debugger to the Polaris JVM
+      - "5005:5005"
+    environment:
+
+      POLARIS_PERSISTENCE_TYPE: relational-jdbc
+      POLARIS_PERSISTENCE_RELATIONAL_JDBC_MAX_RETRIES: 5
+      POLARIS_PERSISTENCE_RELATIONAL_JDBC_INITIAL_DELAY_IN_MS: 100
+      POLARIS_PERSISTENCE_RELATIONAL_JDBC_MAX_DURATION_IN_MS: 5000
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://${POSTGRES_CAT_HOST}:${POSTGRES_CAT_PORT}/${POSTGRES_CAT_DB}
+      QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_CAT_USER}
+      QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_CAT_PASSWORD}
+      POLARIS_REALM_CONTEXT_REALMS: ${POLARIS_REALM}
+      QUARKUS_OTEL_SDK_DISABLED: true
+      polaris.features."ALLOW_INSECURE_STORAGE_TYPES": "true"
+      polaris.features."SUPPORTED_CATALOG_STORAGE_TYPES": "[\"FILE\",\"S3\"]"
+      polaris.readiness.ignore-severe-issues: "true"
+      
+      # S3 endpoint for MinIO
+      AWS_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      POLARIS_BOOTSTRAP_CREDENTIALS: ${POLARIS_REALM},${ROOT_CLIENT_ID},${ROOT_CLIENT_SECRET}
+      polaris.realm-context.realms: ${POLARIS_REALM}
+      quarkus.otel.sdk.disabled: "true"
+
+    volumes:
+      - ./data/polaris:/var/lib/polaris
+      - ./conf/polaris:/polaris 
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8182/q/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  polaris-bootstrap:
+    image: apache/polaris-admin-tool:latest
+    hostname: polaris-bootstrap
+    container_name: polaris-bootstrap
+    depends_on:
+      postgrescat:
+        condition: service_healthy    
+    environment:
+      - POLARIS_PERSISTENCE_TYPE=relational-jdbc
+      - QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://${POSTGRES_CAT_HOST}:${POSTGRES_CAT_PORT}/${POSTGRES_CAT_DB}
+      - QUARKUS_DATASOURCE_USERNAME=${POSTGRES_CAT_USER}
+      - QUARKUS_DATASOURCE_PASSWORD=${POSTGRES_CAT_PASSWORD}
+      - POLARIS_REALM=${POLARIS_REALM}
+      - ROOT_CLIENT_ID=${ROOT_CLIENT_ID}
+      - ROOT_CLIENT_SECRET=${ROOT_CLIENT_SECRET}
+    command:
+      - "bootstrap"
+      - "--realm=${POLARIS_REALM}"
+      - "--credential=${POLARIS_REALM},${ROOT_CLIENT_ID},${ROOT_CLIENT_SECRET}"
+
+  polaris-setup:
+    image: alpine/curl
+    hostname: polaris-setup
+    container_name: polaris-setup
+    depends_on:
+      polaris:
+        condition: service_healthy
+    environment:
+      - CLIENT_ID=${ROOT_CLIENT_ID}
+      - CLIENT_SECRET=${ROOT_CLIENT_SECRET}
+      - CATALOG_NAME=${CATALOG_NAME}
+      - POLARIS_REALM=${POLARIS_REALM}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+    volumes:
+      - ./conf/polaris/:/polaris
+    entrypoint: "/bin/sh"
+    command:
+      - "-c"
+      - >-
+        chmod +x /polaris/create-catalog.sh;
+        chmod +x /polaris/obtain-token.sh;
+        source /polaris/obtain-token.sh $$POLARIS_REALM;
+        echo Creating catalog: $$CATALOG_NAME in realm: $$POLARIS_REALM;
+        export STORAGE_CONFIG_INFO='{"storageType":"S3",
+          "endpoint":"http://localhost:9000",
+          "endpointInternal":"'$$MINIO_ENDPOINT'",
+          "pathStyleAccess":true}';
+        export STORAGE_LOCATION="s3://'$$MINIO_BUCKET'";
+        /polaris/create-catalog.sh $$POLARIS_REALM $$CATALOG_NAME $$TOKEN;
+        echo Extra grants...;
+        curl -H "Authorization: Bearer $$TOKEN" -H 'Content-Type: application/json' \
+          -X PUT \
+          http://polaris:8181/api/management/v1/catalogs/${CATALOG_NAME}/catalog-roles/catalog_admin/grants \
+          -d '{"type":"catalog", "privilege":"CATALOG_MANAGE_CONTENT"}';
+        echo Polaris Setup Complete.;
+
+
+  ################################################################################
+  # Will act as a destination store for our JDBC based Flink catalog
+  ################################################################################
+  postgrescat:
+    image: postgres:12
+    hostname: ${POSTGRES_CAT_HOST}
+    container_name: ${POSTGRES_CAT_HOST}
+    restart: unless-stopped
+    ports:
+      - ${POSTGRES_CAT_PORT}:5432
+    environment:
+      - POSTGRES_DB=${POSTGRES_CAT_DB}
+      - POSTGRES_USER=${POSTGRES_CAT_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_CAT_PASSWORD}
+    healthcheck:
+      test: ["CMD", "psql", "-U", "${POSTGRES_CAT_USER}", "${POSTGRES_CAT_DB}"]
+    volumes:
+      - ./data/${POSTGRES_CAT_HOST}:/var/lib/postgresql/data
+      - ./sql/${POSTGRES_CAT_HOST}:/docker-entrypoint-initdb.d
+    configs:
+      - source: postgres_conf
+        target: /etc/postgresql/postgresql.conf
+      - source: postgres_hba
+        target: /etc/postgresql/data/pg_hba.conf
+    command: -c config_file=/etc/postgresql/postgresql.conf
+
+
+    ################################################################################
+    # MinIO Object Storage - S3 Compatible Storage
+    ################################################################################  
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    hostname: minio
+    container_name: minio
+    ports:
+      - 9000:9000  # API address   
+      - 9001:9001  # Web UI console
+    environment:  
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}          # access.key: mnadmin
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}  # secret.key: mnpassword
+      - AWS_REGION=${AWS_REGION}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_DOMAIN=${MINIO_ALIAS}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+    volumes:
+      - ./data/minio:/data    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 5s
+    command: ["server", "/data", "--console-address", ":9001"]
+
+
+  minio-client:
+    image: minio/mc:latest
+    hostname: mc
+    container_name: mc
+    depends_on:
+      minio:
+        condition: 
+          service_healthy    
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_DOMAIN=${MINIO_ALIAS}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+    entrypoint: >
+      /bin/sh -c "
+      until (mc alias set ${MINIO_ALIAS} ${MINIO_ENDPOINT} ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD}) do echo '...waiting...' && sleep 1; done;
+      mc mb ${MINIO_ALIAS}/${MINIO_BUCKET} --ignore-existing;
+      mc ls ${MINIO_ALIAS};
+      echo "MinIO bucket '${MINIO_BUCKET}' created successfully";
+      tail -f /dev/null
+      "
+
+  ################################################################################
+
+# Without a network explicitly defined, you hit this Hive/Thrift error
+# java.net.URISyntaxException Illegal character in hostname
+# https://github.com/TrivadisPF/platys-modern-data-platform/issues/231
+networks:
+  default:
+    name: ${COMPOSE_PROJECT_NAME}
