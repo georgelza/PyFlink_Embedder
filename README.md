@@ -16,20 +16,32 @@
 
 BLOG: []()
 
-GIT REPO: []()
+GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 
 ## Deployment
 
-- `devlab/docker-compose.yml` which can be brought online by executing below, (this will use `.env`).
+- `<Project Root>/devlab/docker-compose-flink.yml` which can be brought online by executing below, (this will use `.env`).
 
-- Execute `make run` as defined in `devlab/Makefile` to run envirnment
+- Execute `make run_flink` as defined in `devlab/Makefile` to run environment.
   
-- Execute Shadowtraffic to create Workload (#1 AccountHolders, #2 Financial Transactions) => Output to 2 PostgreSQL Tables.
+- Execute `Shadowtraffic` to create Workload (#1 AccountHolders, #2 Financial Transactions) 
+  - => Output to 2 PostgreSQL Tables located in postgrescdc Postgres based database/service.
+  - This is done by executing `<Project Root>/shadowtraffic/run_pg.sh`.
 
-- Execute <xxx> to start Embedding job on Flink Cluster of #1 data set / Account Holders.
+- At this point you haev an incoming data stream into the PostgreSQL tables (`accountholders` and `transactions`).
 
-- Execute <yyy> to start Embedding job on Flink Cluster of #2 data set / Financial Transactions.
+- Next you want to create the various Flink catalogs and tables, after which you can start the embedding processing.
+  
+- Execute `devlab/pyflink/ah_embed.cmd` to start Embedding job on Flink Cluster of #1 data set / Account Holders.
+
+- Execute `devlab/pyflink/txn_embed.cmd` to start Embedding job on Flink Cluster of #2 data set / Financial Transactions.
+
+- Next is moving the data into one or other direction.
+  - You can either move the data directly to a Iceberg or a Paimon based table.
+  - You can push the data to Apache Fluss tables, which you can configure with tiering which will then move/tier the data onto:
+    - Apache Iceberg or Apache Paimon.
+  - Not shown is the option to add a Apache Kafka/Confluent based Kafka cluster, allowing the user to push the data onto Kafka Topics from where you can utlize the Kafka Connect Framework to sink the data into one of many many persistent store.s
 
 
 ## Stack
