@@ -46,7 +46,7 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 ## Stack
 
-The following stack is deployed using one of the provided  `docker-compose-*.yaml` files as per above.
+The following stack is deployed using one of the provided  `<Project Root>/devlab/docker-compose-*.yaml` files as per above.
 
 - [ShadowTraffic](https://shadowtraffic.io)
 
