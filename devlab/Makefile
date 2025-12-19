@@ -74,29 +74,27 @@ watch:
 fsql:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh
 
-deploy:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
 cat:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/1.1.creCat.sql
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/1.1.creCat.sql
 
-cdc:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/2.1.creCdc.sql
+crecdc:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/2.1.creCdcDemog.sql
 
-demog:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/3.1.creTargetDemog.sql
+credemog:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.1.creTargetDemog.sql
 
 crecmplx:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/3.2.creCmplxTarget.sql
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creCmplxTarget.sql
 
-finflow:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/4.1.creInsertsDemog.sql
+insfinflow:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsDemog.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
 inscmplx:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/4.2.creInsertsCmplx.sql
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.2.creInsertsCmplx.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
 ctas:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/4.3.creCtas.sql
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.3.creCtas.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
 
 jm:

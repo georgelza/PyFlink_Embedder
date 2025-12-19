@@ -14,8 +14,8 @@ CREATE CATALOG c_cdcsource WITH
 
 USE CATALOG c_cdcsource;
 
-CREATE DATABASE IF NOT EXISTS demog;            -- Source for PyFlink
-
+-- Source for PyFlink
+CREATE DATABASE IF NOT EXISTS demog;            
 
 -- Paimon based Catalog stored inside PostgreSQL database using JDBC interface
 -------------------------------------------------------------------------------------------------------------------------
@@ -30,22 +30,22 @@ CREATE CATALOG c_paimon WITH (
     ,'jdbc.user'                     = 'dbadmin'
     ,'jdbc.password'                 = 'dbpassword'
     ,'jdbc.driver'                   = 'org.postgresql.Driver'
-    ,'warehouse'                     = 's3://warehouse/paimon'      -- bucket / datastore
-    ,'s3.endpoint'                   = 'http://minio:9000'          -- MinIO endpoint
-    ,'s3.path-style-access'          = 'true'                       -- Required for MinIO
+    ,'warehouse'                     = 's3://warehouse/paimon'      
+    ,'s3.endpoint'                   = 'http://minio:9000'        
+    ,'s3.path-style-access'          = 'true'                     
     ,'table-default.file.format'     = 'parquet'
 );
 
 USE CATALOG c_paimon;
 
 -- Output from PyFlink routine, embedded tables
-CREATE DATABASE IF NOT EXISTS finflow;
+CREATE DATABASE IF NOT EXISTS c_paimon.finflow;
 
 -- Output from CTAS - Flat structured, source from c_paimon.finflow, potentially to a different destination
-CREATE DATABASE IF NOT EXISTS ctas;            
+CREATE DATABASE IF NOT EXISTS c_paimon.ctas;            
 
 -- Transformed into complex JSON Structure, sourced from c_paimon.finflow
-CREATE DATABASE IF NOT EXISTS cmplx;            
+CREATE DATABASE IF NOT EXISTS c_paimon.cmplx;            
 
 SHOW DATABASES;
 

@@ -7,8 +7,8 @@ USE CATALOG c_paimon;
 
 USE cmplx;
 
-SET 'execution.checkpointing.interval'   = '60s';
-SET 'table.exec.sink.upsert-materialize' = 'NONE';
+-- SET 'execution.checkpointing.interval'   = '60s';
+-- SET 'table.exec.sink.upsert-materialize' = 'NONE';
 
 SET 'pipeline.name' = 'Persist into Paimon (cmplx): accountholders';
 

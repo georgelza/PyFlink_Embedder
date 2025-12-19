@@ -7,12 +7,12 @@ USE CATALOG c_paimon;
 
 USE finflow;
 
-SET 'execution.checkpointing.interval'   = '60s';
-SET 'table.exec.sink.upsert-materialize' = 'NONE';
+-- SET 'execution.checkpointing.interval'   = '60s';
+-- SET 'table.exec.sink.upsert-materialize' = 'NONE';
 
 -- Recreate the CDC tables inside this session.
 
-SOURCE '/creFlinkFlows/2.1.creCdcDemog.sql'; 
+SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql'; 
 
 SET 'pipeline.name' = 'Persist into Paimon (finflow): accountholders';
 
