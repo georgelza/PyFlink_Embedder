@@ -1,4 +1,5 @@
-# sql-client-conf.yaml
+# creFlinkFlows/config/sql-client-conf.yaml
+
 execution:
   planner: blink
   type: streaming

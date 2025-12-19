@@ -2,29 +2,33 @@
 -- Execute script 1: 
 -- Create Catalogs
 -- 1.1
-SOURCE '/creFlinkFlows/1.1.creCat.sql';
+SOURCE '/creFlinkFlows/scripts/1.1.creCat.sql';
 
 -- Execute script 2: 
 -- Create CDC Source Tables
 -- This will always create the demog database as our catalog is generic_in_memory
 -- 2.1
-SOURCE '/creFlinkFlows/2.1.creCdcDemog.sql';
+SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql';
 
 -- Execute script 3: 
 -- Create our embedding output table
 -- 3.1
-SOURCE '/creFlinkFlows/3.1.creTargetDemog.sql';
+SOURCE '/creFlinkFlows/scripts/3.1.creTargetDemog.sql';
 
 -- Set common configurations
 SET 'execution.runtime-mode'            = 'streaming';
+SET 'execution.planner.type'            = 'streaming';
 SET 'execution.checkpointing.interval'  = '60s';
+SET 'execution.planner.planner'         = 'blink';
+SET 'execution.planner.result-mode'     = 'table';
+
 
 -- Execute script 4: 
 -- Insert out data into output table, with Pyflink embedding routine included
 -- 4.1 or This could possible all be build into the PyFlink Routine that get's deployed onto the c_cdcsource.demog table
 -- This will first need to 'recreate our c_cdcsource.demog* tables as step 1 in the script before executing the 
 -- Insert into () select () from ...
-SOURCE '/creFlinkFlows/4.1.creInsertsDemog.sql';
+SOURCE '/creFlinkFlows/scripts/4.1.creInsertsDemog.sql';
 
 
 -- Execute script 5: 
