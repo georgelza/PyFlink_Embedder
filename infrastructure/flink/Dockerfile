@@ -1,4 +1,4 @@
-FROM arm64v8/flink:1.20.2-scala_2.12-java17
+FROM arm64v8/flink:1.20.1-scala_2.12-java17
 SHELL ["/bin/bash", "-c"]
 
 RUN echo "--> Install some useful tools (openjdk-17-jdk-headless required on ARM platforms to enable installation of apache-flink)" \
@@ -33,7 +33,7 @@ RUN echo "--> Install apache-flink" \
     && /usr/bin/pip3 install apache-flink==${FLINK_VERSION_FULL}
 
 
-RUN echo "--> Install pyflink & sentence_transformers" \
+RUN echo "--> Install pyflink & sentence_transformers (Localized Embedding engine)" \
     && /usr/bin/pip3 install pyflink sentence_transformers
 
 
@@ -55,8 +55,8 @@ RUN ldconfig /usr/lib
 RUN echo "--> Setup Directory Structure" && \
     mkdir -p /opt/flink/conf/ && \
     mkdir -p /opt/flink/checkpoints && \
-
     mkdir -p /opt/flink/rocksdb 
+
 
 RUN echo "--> Install JARs: Flink's S3 plugin" && \
     mkdir -p ./plugins/s3-fs-hadoop && \
@@ -71,7 +71,7 @@ COPY stage/flink-sql-parquet-${FLINK_VERSION_FULL}.jar                          
 COPY stage/flink-python-${FLINK_VERSION_FULL}.jar                               ${FLINK_HOME}/lib/flink-python-${FLINK_VERSION_FULL}.jar
 
 
-RUN echo "-> Install JARs: Hadoop" && \
+RUN echo "-> Install JARs: General Hadoop" && \
     mkdir -p ./lib/hadoop 
 COPY stage/commons-configuration2-2.1.1.jar                                     ${FLINK_HOME}/lib/commons-configuration2-2.1.1.jar
 COPY stage/commons-logging-1.1.3.jar                                            ${FLINK_HOME}/lib/commons-logging-1.1.3.jar 
@@ -83,6 +83,7 @@ COPY stage/hadoop-hdfs-client-${HADOOP_VERSION}.jar                             
 COPY stage/stax2-api-4.2.1.jar                                                  ${FLINK_HOME}/lib/stax2-api-4.2.1.jar
 COPY stage/woodstox-core-5.3.0.jar                                              ${FLINK_HOME}/lib/woodstox-core-5.3.0.jar 
 COPY stage/aws-java-sdk-bundle-1.12.262.jar                                     ${FLINK_HOME}/lib/aws-java-sdk-bundle-1.12.262.jar
+
 
 RUN echo "--> Install JARs: => Paimon" && \
     mkdir -p ./lib/paimon

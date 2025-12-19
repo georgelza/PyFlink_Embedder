@@ -88,7 +88,13 @@ crecmplx:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creCmplxTarget.sql
 
 # Register our UDF's before continuing.
+dep_ah_udf:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /pyflink/scripts/02_register_ah_embed_udfs.sql
 
+dep_txn_udf:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /pyflink/scripts/03_register_txn_embed_udfs.sql
+
+# back to the scheduled programming
 insfinflow:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsDemog.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
