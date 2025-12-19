@@ -1,4 +1,4 @@
-## Deploying our Pyflink User Defined Functions.
+## Deploying our Pyflink UDF's(User Defined Functions.)
 
 
 ### Execute our 2 Pyflink functions producing embedding values
@@ -13,7 +13,9 @@ The Apache Flink hosted Pyflink jobs are executed using:
 (from within <project root>/devlab directory):
 
 - `make jm`
+
 - `cd /pyflink`
+  
 - copy command from `*_embed.cmd` into jobmanager terminal and hit ENTER
 
 
