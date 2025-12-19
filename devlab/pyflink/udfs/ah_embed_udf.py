@@ -19,7 +19,7 @@
 #
 #   /opt/flink/bin/flink run \
 #        -m jobmanager:8081 \
-#        -py /pyflink/flink_AH_embed_udf.py \
+#        -py /pyflink/udfs/ah_embed_udf.py \
 #        -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar
 #
 ########################################################################################################################
@@ -239,7 +239,7 @@ table_env.create_temporary_system_function("generate_ah_embedding", generate_ah_
 
 
 embedding_insert_query = """
-    INSERT INTO c_paimon.finflow.accountholders_embed
+    INSERT INTO c_paimon.finflow.accountholders
     SELECT 
          _id
         ,firstname
@@ -251,8 +251,8 @@ embedding_insert_query = """
         ,accounts
         ,emailaddress
         ,mobilephonenumber
-        ,generate_embedding(
-            firstname 
+        ,generate_ah_embedding(
+             firstname 
             ,lastname 
             ,dob
             ,gender
@@ -265,7 +265,7 @@ embedding_insert_query = """
         ,${dimension} AS embedding_dimensions
         ,CURRENT_TIMESTAMP(3) AS embedding_timestamp
         ,created_at
-    FROM postgres_catalog.demog.accountholders
+    FROM c_cdcsource.demog.accountholders
 """
 
 # Execute the pipeline
