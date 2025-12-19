@@ -6,11 +6,9 @@ define HELP
 
 Available commands:
 
-- build: Build required Docker images (Flink with CDC)
+- build: 		Build required Docker images (Flink with CDC)
 
-- run_base:		Start Base Polaris services (Polaris, PostgreSQL & Minio)
-- run:   		Start All services (Flink, Polaris, PostgreSQL & Minio)
-
+- run:   		Start All services (Flink, PostgreSQL & Minio)
 - stop:  		Stop the project
 - start: 		Restart a stopped project
 - down:  		Tear down the project, clean directories
@@ -45,7 +43,7 @@ run:
  		postgrescat postgrescdc \
 		minio minio-client \
 		--remove-orphans
-	@echo "✅ Flink & JDBC based Catalog services started successfully"
+	@echo "✅ Flink with JDBC based Catalog and supporting services started successfully"
 .PHONY: run
 
 stop:
@@ -78,6 +76,28 @@ fsql:
 
 deploy:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master.sql -s /creFlinkFlows/config/sql-client-config.yaml
+
+cat:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/1.1.creCat.sql
+
+cdc:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/2.1.creCdc.sql
+
+demog:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/3.1.creTargetDemog.sql
+
+crecmplx:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/3.2.creCmplxTarget.sql
+
+finflow:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/4.1.creInsertsDemog.sql
+
+inscmplx:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/4.2.creInsertsCmplx.sql
+
+ctas:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/4.3.creCtas.sql
+
 
 jm:
 	docker compose exec --interactive --tty jobmanager /bin/bash
