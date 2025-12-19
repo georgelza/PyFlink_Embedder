@@ -1,4 +1,4 @@
--- scripts/02_register_embed_udfs.sql
+-- scripts/02_register_txn_embed_udfs.sql
 
 -- Load Python UDF from file
 CREATE TEMPORARY FUNCTION generate_txn_embedding AS 'txn_embed_udf.main'

@@ -1,4 +1,4 @@
--- scripts/01_register_embed_udfs.sql
+-- scripts/01_register_ah_embed_udfs.sql
 
 -- Load Python UDF from file
 CREATE TEMPORARY FUNCTION generate_ah_embedding AS 'ah_embed_udf.main' 
