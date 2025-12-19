@@ -1,6 +1,15 @@
+-- Output Tables for our embedding process, source from CDC tables
+
+-- See 2.1
+USE CATALOG c_paimon;
 
 
-CREATE TABLE c_paimon.finflow.accountholders_embed (
+
+USE finflow;
+
+
+
+CREATE OR REPLACE TABLE accountholders (
      _id                           BIGINT
     ,nationalid                    VARCHAR(16)
     ,firstname                     VARCHAR(100)
@@ -12,7 +21,6 @@ CREATE TABLE c_paimon.finflow.accountholders_embed (
     ,accounts                      STRING
     ,emailaddress                  VARCHAR(100)
     ,mobilephonenumber             VARCHAR(20)
-    -- New embedding vector column
     ,embedding_vector              ARRAY<FLOAT>
     ,embedding_dimensions          INT
     ,embedding_timestamp           TIMESTAMP_LTZ(3)    
@@ -20,7 +28,7 @@ CREATE TABLE c_paimon.finflow.accountholders_embed (
     ,PRIMARY KEY (_id) NOT ENFORCED
 );
 
-CREATE TABLE c_paimon.finflow.transactions_embedded (
+CREATE OR REPLACE TABLE transactions (
      _id                            BIGINT              NOT NULL
     ,eventid                        VARCHAR(36)
     ,transactionid                  VARCHAR(36)
@@ -59,7 +67,6 @@ CREATE TABLE c_paimon.finflow.transactions_embedded (
     ,numberoftransactions           INT
     ,schemaversion                  INT
     ,usercode                       VARCHAR(4)
-    -- New embedding vector column
     ,embedding_vector              ARRAY<FLOAT>
     ,embedding_dimensions          INT
     ,embedding_timestamp           TIMESTAMP_LTZ(3)  
@@ -67,4 +74,4 @@ CREATE TABLE c_paimon.finflow.transactions_embedded (
     ,PRIMARY KEY (_id) NOT ENFORCED
 );
 
--- now see 3.2.creTarget.sql
+-- now see 4.1

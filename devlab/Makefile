@@ -9,8 +9,7 @@ Available commands:
 - build: Build required Docker images (Flink with CDC)
 
 - run_base:		Start Base Polaris services (Polaris, PostgreSQL & Minio)
-- run_flink:   	Start Flink and Polaris services (Flink, Polaris, PostgreSQL & Minio)
-- run:   		Start All services (Flink, Fluss, Polaris, PostgreSQL & Minio)
+- run:   		Start All services (Flink, Polaris, PostgreSQL & Minio)
 
 - stop:  		Stop the project
 - start: 		Restart a stopped project
@@ -39,37 +38,14 @@ build:
 .PHONY: build
 
 
-run_base:
-	@echo "🚀 Starting Polaris Catalog LAB configuration (Polaris, PostgreSQL & MinIO)..."
-	docker compose -f docker-compose-basic.yml -p aiembed up -d \
- 		postgrescat \
-		minio minio-client \
-		polaris polaris-bootstrap polaris-setup \
-		--remove-orphans
-	@echo "✅ Polaris Catalog LAB services started successfully"
-.PHONY: run_base
-
-run_flink:
-	@echo "🚀 Starting Flnk + Polaris Catalog LAB configuration (Flink, Polaris, PostgreSQL & MinIO)..."
-	docker compose -f docker-compose-flink.yml -p aiembed up -d \
-		jobmanager taskmanager \
- 		postgrescat postgrescdc \
-		minio minio-client \
-		polaris polaris-bootstrap polaris-setup \
-		--remove-orphans
-	@echo "✅ Flink & Polaris Catalog LAB services started successfully"
-.PHONY: run_flink
-
 run:
-	@echo "🚀 Starting All services (Flink, Fluss, Polaris, PostgreSQL & MinIO)..."
-	docker compose -f docker-compose-all.yml -p aiembed up -d \
+	@echo "🚀 Starting Flnk + JDBC based Catalog configuration (Flink, PostgreSQL & MinIO)..."
+	docker compose -f docker-compose.yml -p aiembed up -d \
 		jobmanager taskmanager \
-		coordinator tablet-server-0 tablet-server-1 tablet-server-2 \
  		postgrescat postgrescdc \
 		minio minio-client \
-		polaris polaris-bootstrap polaris-setup \
 		--remove-orphans
-	@echo "✅ All services started successfully"
+	@echo "✅ Flink & JDBC based Catalog services started successfully"
 .PHONY: run
 
 stop:
@@ -84,8 +60,6 @@ down:
 	cd data/; rm -rf postgrescdc
 	cd data/; rm -rf postgrescat
 	cd data/; rm -rf minio
-	cd data/; rm -rf polaris
-
 
 ps:
 	docker compose ps
@@ -101,6 +75,9 @@ watch:
 
 fsql:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh
+
+deploy:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
 jm:
 	docker compose exec --interactive --tty jobmanager /bin/bash

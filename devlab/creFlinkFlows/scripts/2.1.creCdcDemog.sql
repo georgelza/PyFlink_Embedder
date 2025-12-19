@@ -1,6 +1,15 @@
+-- Inbound from PostgreSQL via CDC Process
+-- Main demog inbound tables, will be used as Pyflink source
+-- see 1.1
+USE CATALOG c_cdcsource;
 
-# CDC Sources
-CREATE OR REPLACE TABLE c_cdcsource.demog.accountholders (
+CREATE DATABASE IF NOT EXISTS demog;  
+
+USE demog;
+
+
+
+CREATE OR REPLACE TABLE accountholders (
      _id                BIGINT                  NOT NULL
     ,nationalid         VARCHAR(16)             NOT NULL
     ,firstname          VARCHAR(100)
@@ -24,15 +33,14 @@ CREATE OR REPLACE TABLE c_cdcsource.demog.accountholders (
     ,'database-name'                       = 'demog'
     ,'schema-name'                         = 'public'
     ,'table-name'                          = 'accountholders'
-    ,'slot.name'                           = 'accountholders0'
-    -- experimental feature: incremental snapshot (default off)
-    ,'scan.incremental.snapshot.enabled'   = 'true'               -- experimental feature: incremental snapshot (default off)
-    ,'scan.startup.mode'                   = 'initial'            -- https://nightlies.apache.org/flink/flink-cdc-docs-release-3.1/docs/connectors/flink-sources/postgres-cdc/#startup-reading-position     ,'decoding.plugin.name'                = 'pgoutput'
+    ,'slot.name'                           = 'accountholders_pyFlink'
+    ,'scan.incremental.snapshot.enabled'   = 'true'               
+    ,'scan.startup.mode'                   = 'initial'            
     ,'decoding.plugin.name'                = 'pgoutput'
 );
 
 
-CREATE OR REPLACE TABLE c_cdcsource.demog.transactions (
+CREATE OR REPLACE TABLE transactions (
      _id                            BIGINT              NOT NULL
     ,eventid                        VARCHAR(36)         NOT NULL
     ,transactionid                  VARCHAR(36)         NOT NULL
@@ -83,13 +91,10 @@ CREATE OR REPLACE TABLE c_cdcsource.demog.transactions (
     ,'database-name'                       = 'demog'
     ,'schema-name'                         = 'public'
     ,'table-name'                          = 'transactions'
-    ,'slot.name'                           = 'transactions0'
-    -- experimental feature: incremental snapshot (default off)
-    ,'scan.incremental.snapshot.enabled'   = 'true'               -- experimental feature: incremental snapshot (default off)
-    ,'scan.startup.mode'                   = 'initial'            -- https://nightlies.apache.org/flink/flink-cdc-docs-release-3.1/docs/connectors/flink-sources/postgres-cdc/#startup-reading-position     ,'decoding.plugin.name'                = 'pgoutput'
+    ,'slot.name'                           = 'transactions_pyFlink'
+    ,'scan.incremental.snapshot.enabled'   = 'true'               
+    ,'scan.startup.mode'                   = 'initial'            
     ,'decoding.plugin.name'                = 'pgoutput'
 );
 
-################################################################################################################################################
-
--- now see 3.1.creTarget.sql
+-- See 3.1, 3.2

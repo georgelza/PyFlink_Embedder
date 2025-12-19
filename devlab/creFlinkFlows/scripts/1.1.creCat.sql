@@ -1,0 +1,52 @@
+
+-- Thinking is we will consume from PostgreSQL sources, then use a PyFlink to flatten the structure, outputting to a Fluss table.
+-- then reading new Fluss table, calculate embeddings, output to another Fluss table/s. 
+-- This in turn will be configured with Lakehouse tiering into Paimon table on MinIO S3
+
+-- Catalog c_cdcsource moved to 2.1.creCdc.sql
+-- This is due t this being an generic in memory catalog and is required to be re-created in every session together with the 
+-- CDC backed tables.
+
+USE CATALOG default_catalog;
+  
+CREATE CATALOG c_cdcsource WITH 
+    ('type'='generic_in_memory'); 
+
+USE CATALOG c_cdcsource;
+
+CREATE DATABASE IF NOT EXISTS demog;            -- Source for PyFlink
+
+
+-- Paimon based Catalog stored inside PostgreSQL database using JDBC interface
+-------------------------------------------------------------------------------------------------------------------------
+-- server: postgrescat
+-- db:     flink_catalog
+-- schema: paimon_catalog
+CREATE CATALOG c_paimon WITH (
+     'type'                          = 'paimon'
+    ,'metastore'                     = 'jdbc'                      
+    ,'catalog-key'                   = 'jdbc'
+    ,'uri'                           = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
+    ,'jdbc.user'                     = 'dbadmin'
+    ,'jdbc.password'                 = 'dbpassword'
+    ,'jdbc.driver'                   = 'org.postgresql.Driver'
+    ,'warehouse'                     = 's3://warehouse/paimon'      -- bucket / datastore
+    ,'s3.endpoint'                   = 'http://minio:9000'          -- MinIO endpoint
+    ,'s3.path-style-access'          = 'true'                       -- Required for MinIO
+    ,'table-default.file.format'     = 'parquet'
+);
+
+USE CATALOG c_paimon;
+
+-- Output from PyFlink routine, embedded tables
+CREATE DATABASE IF NOT EXISTS finflow;
+
+-- Output from CTAS - Flat structured, source from c_paimon.finflow, potentially to a different destination
+CREATE DATABASE IF NOT EXISTS ctas;            
+
+-- Transformed into complex JSON Structure, sourced from c_paimon.finflow
+CREATE DATABASE IF NOT EXISTS cmplx;            
+
+SHOW DATABASES;
+
+-- next execute 2.1

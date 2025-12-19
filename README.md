@@ -9,19 +9,17 @@
 
 4. Calculate vector embedding values using PyFlink, comsuming New tables from #3. -> Function 2 (AccountHolders) and Function 3 (Transactions) => Output to new Flink Table
 
-5. -> Push to Iceberg Tables
-
-6. -> Push to Apache Paimon Tabes
+5. -> Push to Apache Paimon Tabes
 
 
-BLOG: []()
+BLOG: [Using Pyflink UDF to calculate embedding vectors on inbound tables via Flink CDC]()
 
 GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 
 ## Deployment
 
-- `<Project Root>/devlab/docker-compose-flink.yml` which can be brought online by executing below, (this will use `.env`).
+- `<Project Root>/devlab/docker-compose.yml` which can be brought online by executing below, (this will use `.env`).
 
 - Execute `make run_flink` as defined in `devlab/Makefile` to run environment.
   
@@ -48,23 +46,17 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 The following stack is deployed using one of the provided  `<Project Root>/devlab/docker-compose-*.yaml` files as per above.
 
-- [ShadowTraffic](https://shadowtraffic.io)
+- [Apache Flink 1.20.1](https://nightlies.apache.org/flink/flink-docs-release-1.20/)                   
 
-- [Apache Flink 1.20.2](https://nightlies.apache.org/flink/flink-docs-release-1.20/)                   
-
-- [Apache Flink CDC 3.5](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.5/)
-
-- [Apache Polaris 1.2.0](https://polaris.apache.org)
-
-- [Apache Iceberg 1.9.1](https://iceberg.apache.org)
+- [Apache Flink CDC 3.5.0](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.5/)
 
 - [Apache Paimon 1.3.1.](https://paimon.apache.org)
-
-- [Apache Fluss 0.8](https://fluss.apache.org)
 
 - [PostgreSQL 12](https://www.postgresql.org)
 
 - [MinIO](https://www.min.io) - Project has gone into Maintenance mode... 
+
+- [ShadowTraffic](https://shadowtraffic.io)
 
 
 ## Data Products 

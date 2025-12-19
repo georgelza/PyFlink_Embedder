@@ -67,9 +67,9 @@ COPY stage/fluss-flink-1.20-0.8.0-incubating.jar        /opt/flink/lib/fluss-fli
 COPY stage/fluss-flink-tiering-0.8.0-incubating.jar     /opt/flink/lib/fluss-flink-tiering-0.8.0-incubating.jar
 COPY stage/fluss-fs-s3-0.8.0-incubating.jar             /opt/flink/lib/fluss-fs-s3-0.8.0-incubating.jar
 COPY stage/fluss-lake-paimon-0.8.0-incubating.jar       /opt/flink/lib/fluss-lake-paimon-0.8.0-incubating.jar
-
 COPY stage/fluss-lake-iceberg-0.8.0-incubating.jar      /opt/flink/lib/fluss-lake-iceberg-0.8.0-incubating.jar
 COPY stage/iceberg-flink-1.20-1.9.1.jar                 /opt/flink/lib/iceberg-flink-1.20-1.9.1.jar
+
 COPY stage/iceberg-flink-runtime-1.20-1.9.1.jar         /opt/flink/lib/iceberg-flink-runtime-1.20-1.9.1.jar
 COPY stage/iceberg-aws-bundle-1.9.1.jar                 /opt/flink/iceberg-aws-bundle-1.9.1.jar
 

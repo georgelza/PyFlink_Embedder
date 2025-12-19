@@ -18,11 +18,3 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA paimon_catalog GRANT ALL ON TABLES TO dbadmin
 ALTER DEFAULT PRIVILEGES IN SCHEMA paimon_catalog GRANT ALL ON SEQUENCES TO dbadmin;
 
 COMMENT ON SCHEMA paimon_catalog IS 'Flink / Paimon JDBC Catalog Storage';
-
-
--- Apache Polaris Catalog Datastore
-
--- psql -h localhost -p 5432 -U dbadmin -d findept
-
-CREATE DATABASE findept;
-GRANT ALL PRIVILEGES ON DATABASE findept TO dbadmin;
