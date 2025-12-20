@@ -29,8 +29,8 @@ __email__       = "georgelza@gmail.com"
 __version__     = "1.0.0"
 __copyright__   = "Copyright 2025 - G Leonard"
 
-
 from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.table import EnvironmentSettings, TableEnvironment
 from pyflink.table import StreamTableEnvironment, EnvironmentSettings
 from pyflink.table.udf import udf
 from pyflink.table import DataTypes
@@ -40,6 +40,23 @@ import sys
 # Lazy import and model loading inside the UDF
 import torch
 from sentence_transformers import SentenceTransformer
+
+# Add your UDF path to Python path
+sys.path.append('/pyflink/udfs')
+
+# Import your UDF
+from txn_embed_udf import generate_txn_embedding
+
+# Create table environment
+env             = StreamExecutionEnvironment.get_execution_environment()
+env_settings    = EnvironmentSettings.in_streaming_mode()
+table_env       = TableEnvironment.create(env_settings)
+
+# Register the UDF
+table_env.create_temporary_function(
+    "generate_txn_embedding", 
+    generate_txn_embedding
+)
 
 # Embedding model
 model      = 'sentence-transformers/all-MiniLM-L6-v2'
@@ -485,6 +502,7 @@ def main():
     statement_set.execute().wait()
 #    table_env.execute_sql(embedding_insert_query).wait()
     print("Embedding pipeline completed successfully!")
+
 
 #end main
 

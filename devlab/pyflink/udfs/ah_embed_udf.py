@@ -15,17 +15,6 @@
 #                       :   https://www.decodable.co/blog/a-hands-on-introduction-to-pyflink
 #
 #
-#   in Jobmanager i.e.  (NOT SURE)
-#
-#   /opt/flink/bin/flink run \
-#        -m jobmanager:8081 \
-#        -py /pyflink/udfs/ah_embed_udf.py \
-#        -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
-#        -j /opt/flink/lib/flink-python-1.20.1.jar \
-#
-#   /opt/flink/bin/flink run \
-#        -m jobmanager:8081 \
-#        -py /pyflink/udfs/ah_embed_udf.py
 #
 ########################################################################################################################
 __author__      = "George Leonard"
@@ -38,10 +27,31 @@ Standalone Python UDF for generating account holder embeddings
 Can be registered in Flink SQL using CREATE TEMPORARY FUNCTION
 """
 
+from pyflink.table import EnvironmentSettings, TableEnvironment
 from pyflink.table.udf import udf
 from pyflink.table import DataTypes
+from pyflink.datastream import StreamExecutionEnvironment
 import torch
 from sentence_transformers import SentenceTransformer
+import sys
+
+# Add your UDF path to Python path
+sys.path.append('/pyflink/udfs')
+
+# Import your UDF
+from ah_embed_udf import generate_ah_embedding
+
+# Create table environment
+env             = StreamExecutionEnvironment.get_execution_environment()
+env_settings    = EnvironmentSettings.in_streaming_mode()
+table_env       = TableEnvironment.create(env_settings)
+
+# Register the UDF
+table_env.create_temporary_function(
+    "generate_ah_embedding", 
+    generate_ah_embedding
+)
+
 
 # Embedding model configuration
 model = 'sentence-transformers/all-MiniLM-L6-v2'
@@ -60,18 +70,17 @@ def generate_ah_embedding(dimensions,
                           emailaddress, 
                           mobilephonenumber):
     """
-    Generate 384-dimensional embeddings for user profiles using sentence-transformers.
-    
-    This UDF lazy-loads the model to avoid serialization issues.
-
-    Args:
-        embedding dimensions,
-        accountHolder details,
+        Generate 384-dimensional embeddings for user profiles using sentence-transformers.
         
-    Returns:
-        array of float: ....
+        This UDF lazy-loads the model to avoid serialization issues.
+
+        Args:
+            embedding dimensions,
+            accountHolder details,
+            
+        Returns:
+            array of float: ....
     """
-    
     
     
     # Use a class variable to cache the model across invocations

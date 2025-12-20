@@ -98,7 +98,9 @@ register_txn_udf:
 ins_ah:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsAh.sql -s /creFlinkFlows/config/sql-client-config.yaml
 
-ins_txn:
+#ins_txn:
+# Placeholder
+# Executed by executing the txn_embed.cmd job at the Jobmanager CLI
 
 ins_cmplx:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.3.creInsertsCmplx.sql -s /creFlinkFlows/config/sql-client-config.yaml
