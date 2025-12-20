@@ -31,8 +31,8 @@ from pyflink.table import EnvironmentSettings, TableEnvironment
 from pyflink.table.udf import udf
 from pyflink.table import DataTypes
 from pyflink.datastream import StreamExecutionEnvironment
-import torch
 from sentence_transformers import SentenceTransformer
+import torch
 import sys
 
 # Add your UDF path to Python path
@@ -54,8 +54,7 @@ table_env.create_temporary_function(
 
 
 # Embedding model configuration
-model = 'sentence-transformers/all-MiniLM-L6-v2'
-#dimensions = 384
+model           = 'sentence-transformers/all-MiniLM-L6-v2'
 
 
 @udf(result_type=DataTypes.ARRAY(DataTypes.FLOAT()))

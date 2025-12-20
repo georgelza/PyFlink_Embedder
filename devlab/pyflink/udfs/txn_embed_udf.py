@@ -35,17 +35,23 @@ from pyflink.table import StreamTableEnvironment, EnvironmentSettings
 from pyflink.table.udf import udf
 from pyflink.table import DataTypes
 from pyflink.common import Configuration
-import sys
-
-# Lazy import and model loading inside the UDF
-import torch
+from datetime import datetime
 from sentence_transformers import SentenceTransformer
+import sys
+import torch
 
 # Add your UDF path to Python path
 sys.path.append('/pyflink/udfs')
 
 # Import your UDF
 from txn_embed_udf import generate_txn_embedding
+
+dimensions      = 384
+now             = datetime.now()
+model           = 'sentence-transformers/all-MiniLM-L6-v2'
+# sentence-transformers/all-mpnet-base-v2   (768D) - Higher quality slower
+# BAAI/bge-small-en-v1.5                    (384D) - Optimized for retrieval tasks
+# intfloat/e5-small-v2                      (384D) - Good for semantic similarity
 
 # Create table environment
 env             = StreamExecutionEnvironment.get_execution_environment()
@@ -57,14 +63,6 @@ table_env.create_temporary_function(
     "generate_txn_embedding", 
     generate_txn_embedding
 )
-
-# Embedding model
-model      = 'sentence-transformers/all-MiniLM-L6-v2'
-dimensions = 384
-
-# sentence-transformers/all-mpnet-base-v2   (768D) - Higher quality slower
-# BAAI/bge-small-en-v1.5                    (384D) - Optimized for retrieval tasks
-# intfloat/e5-small-v2                      (384D) - Good for semantic similarity
 
 # Define UDF for embedding generation
 @udf(result_type=DataTypes.ARRAY(DataTypes.FLOAT()))
@@ -221,11 +219,12 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
 
 # end generate_txn_embedding
 
+
 def main():
 
     pipeline_name = f"Flink_txn_embedding"
 
-    print(f"Starting {pipeline_name}")
+    print(f"Starting {pipeline_name} {now.strftime("%Y-%m-%d %H:%M:%S")}")
 
     # --------------------------------------------------------------------------
     # Some environment settings and a nice Jobname/description "pipeline.name" for flink console
@@ -503,8 +502,8 @@ def main():
 #    table_env.execute_sql(embedding_insert_query).wait()
     print("Embedding pipeline completed successfully!")
 
-
 #end main
+
 
 if __name__ == "__main__":
         
