@@ -21,8 +21,7 @@
 #        -m jobmanager:8081 \
 #        -py /pyflink/udfs/txn_embed_udf.py \
 #        -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
-#        -j /opt/flink/lib/flink-python-1.20.1.jar \
-#        -j 
+#        -j /opt/flink/lib/flink-python-1.20.1.jar
 #
 ########################################################################################################################
 __author__      = "George Leonard"
@@ -239,11 +238,10 @@ def main():
     # Add necessary JAR dependencies for connectors
     # --------------------------------------------------------------------------
     postgres_cdc_jar = "file:///opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar" 
-    flink_python_jar = "file:///opt/flink/lib/flink-python-1.20.2.jar" 
+    flink_python_jar = "file:///opt/flink/lib/flink-python-1.20.2.jar"
     postgres_jdbc_jar = "file:///opt/flink/lib/postgresql-42.7.6.jar"
     
     table_env.get_config().set("pipeline.jars", f"{postgres_cdc_jar};{flink_python_jar};{postgres_jdbc_jar}")
-
 
     # --------------------------------------------------------------------------
     # Register Postgres Input Catalog
@@ -316,10 +314,11 @@ def main():
             ,'database-name'                       = 'demog'
             ,'schema-name'                         = 'public'
             ,'table-name'                          = 'transactions'
-            ,'slot.name'                           = 'transactions0'
+            ,'slot.name'                           = 'transactions_python_udf'
             ,'scan.incremental.snapshot.enabled'   = 'true'
             ,'scan.startup.mode'                   = 'initial'
             ,'decoding.plugin.name'                = 'pgoutput'
+            ,'debezium.snapshot.mode'              = 'initial'
         );
     """
 
@@ -328,20 +327,21 @@ def main():
     
     # --------------------------------------------------------------------------
     # Register Apache Paimon output Catalog
+    # Using JDBC metastore to match your production setup (1.1.creCat.sql)
     # --------------------------------------------------------------------------
-    print("Creating Paimon catalog c_paimon...")
+    print("Creating Paimon catalog c_paimon (JDBC metastore)...")
     table_env.execute_sql("""
         CREATE CATALOG c_paimon WITH (
             'type'                          = 'paimon'
-            ,'metastore'                    = 'jdbc'                      
+            ,'metastore'                    = 'jdbc'
             ,'catalog-key'                  = 'jdbc'
             ,'uri'                          = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
             ,'jdbc.user'                    = 'dbadmin'
             ,'jdbc.password'                = 'dbpassword'
             ,'jdbc.driver'                  = 'org.postgresql.Driver'
-            ,'warehouse'                    = 's3://warehouse/paimon'      
-            ,'s3.endpoint'                  = 'http://minio:9000'        
-            ,'s3.path-style-access'         = 'true'                     
+            ,'warehouse'                    = 's3://warehouse/paimon'
+            ,'s3.endpoint'                  = 'http://minio:9000'
+            ,'s3.path-style-access'         = 'true'
             ,'table-default.file.format'    = 'parquet'
         );
     """)
@@ -365,50 +365,17 @@ def main():
     # --------------------------------------------------------------------------
     # Our Target table - Insert into pre-created sink table
     # --------------------------------------------------------------------------    
-    # Expected sink table structure (should be created beforehand):
-    # CREATE TABLE c_paimon.finflow.transactions (
+    # Target table structure from 3.1.creTargetFinflow.sql:
+    # CREATE OR REPLACE TABLE transactions (
     #      _id                            BIGINT              NOT NULL
-    #     ,eventid                        VARCHAR(36)         NOT NULL
-    #     ,transactionid                  VARCHAR(36)         NOT NULL
+    #     ,eventid                        VARCHAR(36)
+    #     ,transactionid                  VARCHAR(36)
     #     ,eventtime                      VARCHAR(30)
-    #     ,direction                      VARCHAR(8)
-    #     ,eventtype                      VARCHAR(10)
-    #     ,creationdate                   VARCHAR(20)
-    #     ,accountholdernationalid        VARCHAR(16)
-    #     ,accountholderaccount           STRING
-    #     ,counterpartynationalid         VARCHAR(16)
-    #     ,counterpartyaccount            STRING
-    #     ,tenantid                       VARCHAR(8)
-    #     ,fromid                         VARCHAR(8)
-    #     ,accountagentid                 VARCHAR(8)
-    #     ,fromfibranchid                 VARCHAR(6)
-    #     ,accountnumber                  VARCHAR(16)
-    #     ,toid                           VARCHAR(8)
-    #     ,accountidcode                  VARCHAR(5)
-    #     ,counterpartyagentid            VARCHAR(8)
-    #     ,tofibranchid                   VARCHAR(6)
-    #     ,counterpartynumber             VARCHAR(16)
-    #     ,counterpartyidcode             VARCHAR(5)
-    #     ,amount                         STRING
-    #     ,msgtype                        VARCHAR(6)
-    #     ,settlementclearingsystemcode   VARCHAR(5)
-    #     ,paymentclearingsystemreference VARCHAR(12)
-    #     ,requestexecutiondate           VARCHAR(10)
-    #     ,settlementdate                 VARCHAR(10)
-    #     ,destinationcountry             VARCHAR(30)
-    #     ,localinstrument                VARCHAR(2)
-    #     ,msgstatus                      VARCHAR(12)
-    #     ,paymentmethod                  VARCHAR(4)
-    #     ,settlementmethod               VARCHAR(4)
-    #     ,transactiontype                VARCHAR(2)
-    #     ,verificationresult             VARCHAR(4)
-    #     ,numberoftransactions           INT
-    #     ,schemaversion                  INT
-    #     ,usercode                       VARCHAR(4)
-    #     ,embedding_vector               ARRAY<FLOAT>
-    #     ,embedding_dimensions           INT
-    #     ,embedding_timestamp            TIMESTAMP_LTZ(3)  
-    #     ,created_at                     TIMESTAMP_LTZ(3)
+    #     ... (all transaction fields)
+    #     ,embedding_vector              ARRAY<FLOAT>
+    #     ,embedding_dimensions          INT
+    #     ,embedding_timestamp           TIMESTAMP_LTZ(3)  
+    #     ,created_at                    TIMESTAMP_LTZ(3)
     #     ,PRIMARY KEY (_id) NOT ENFORCED
     # );
 
@@ -501,13 +468,23 @@ def main():
     statement_set.add_insert_sql(embedding_insert_query)
     
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-    print(f"Starting transactions embedding pipeline... - {now}")
+    print(f"Submitting transactions embedding pipeline... - {now}")
     
-    # Execute the statement set
-    statement_set.execute().wait()
+    # Execute and get the job execution result
+    # For streaming jobs submitted via 'flink run', we don't want to block
+    # The job will continue running in the cluster after the script exits
+    job_client = statement_set.execute()
+    
+    print(f"Job submitted successfully!")
+    print(f"Job ID:              {job_client.get_job_id()}")
+    print(f"Check job status at: http://localhost:8084")
+    print(f"The streaming job will continue running in the Flink cluster.")
     
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-    print(f"Embedding pipeline completed successfully! - {now}")
+    print(f"Script completed - {now}")
+    
+    # Note: We don't call .wait() because that would block until the streaming job completes
+    # Streaming jobs run indefinitely, so we just submit and exit
 
 # end main
 
