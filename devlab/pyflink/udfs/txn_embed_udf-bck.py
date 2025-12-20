@@ -15,14 +15,13 @@
 #                       :   https://www.decodable.co/blog/a-hands-on-introduction-to-pyflink
 #
 #
-#   in Jobmanager i.e.
+#   in Jobmanager i.e.  (NOT SURE)
 #
 #   /opt/flink/bin/flink run \
 #        -m jobmanager:8081 \
 #        -py /pyflink/udfs/txn_embed_udf.py \
 #        -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
-#        -j /opt/flink/lib/flink-python-1.20.1.jar \
-#        -j 
+#        -j /opt/flink/lib/flink-python-1.20.1.jar
 #
 ########################################################################################################################
 __author__      = "George Leonard"
@@ -42,32 +41,38 @@ import sys
 import torch
 
 
-# --------------------------------------------------------------------------
-# Constants
-# --------------------------------------------------------------------------
-DIMENSIONS      = 384
-MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
+dimensions      = 384
+model           = 'sentence-transformers/all-MiniLM-L6-v2'
 # sentence-transformers/all-mpnet-base-v2   (768D) - Higher quality slower
 # BAAI/bge-small-en-v1.5                    (384D) - Optimized for retrieval tasks
 # intfloat/e5-small-v2                      (384D) - Good for semantic similarity
 
+# Create table environment
+env             = StreamExecutionEnvironment.get_execution_environment()
+env_settings    = EnvironmentSettings.in_streaming_mode()
+table_env       = TableEnvironment.create(env_settings)
 
-# --------------------------------------------------------------------------
+# Register the UDF
+table_env.create_temporary_function(
+    "generate_txn_embedding", 
+    generate_txn_embedding
+)
+
 # Define UDF for embedding generation
-# --------------------------------------------------------------------------
 @udf(result_type=DataTypes.ARRAY(DataTypes.FLOAT()))
-def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creationdate,
-                           accountholdernationalid, accountholderaccount,
-                           counterpartynationalid, counterpartyaccount,
-                           tenantid, fromid, accountagentid, fromfibranchid,
-                           accountnumber, toid, accountidcode, counterpartyagentid,
-                           tofibranchid, counterpartynumber, counterpartyidcode,
-                           amount, msgtype, settlementclearingsystemcode,
-                           paymentclearingsystemreference, requestexecutiondate,
-                           settlementdate, destinationcountry, localinstrument,
-                           msgstatus, paymentmethod, settlementmethod,
-                           transactiontype, verificationresult, numberoftransactions,
-                           schemaversion, usercode):
+def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creationdate
+        ,accountholdernationalid, accountholderaccount
+        ,counterpartynationalid, counterpartyaccount
+        ,tenantid, fromid, accountagentid, fromfibranchid
+        ,accountnumber, toid, accountidcode, counterpartyagentid
+        ,tofibranchid, counterpartynumber, counterpartyidcode
+        ,amount, msgtype, settlementclearingsystemcode
+        ,paymentclearingsystemreference, requestexecutiondate
+        ,settlementdate, destinationcountry, localinstrument
+        ,msgstatus, paymentmethod, settlementmethod
+        ,transactiontype, verificationresult, numberoftransactions
+        ,schemaversion, usercode):
+    
     """
     Generate 384-dimensional embeddings for financial transactions using sentence-transformers.
     This UDF lazy-loads the model to avoid serialization issues.
@@ -77,8 +82,10 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
     
     # Use a class variable to cache the model across invocations
     if not hasattr(generate_txn_embedding, 'model'):
-        generate_txn_embedding.model = SentenceTransformer(MODEL)
+        
+        generate_txn_embedding.model = SentenceTransformer(model)
         generate_txn_embedding.model.eval()  # Set to evaluation mode
+    
     
     # Build a structured text representation of the transaction
     transaction_parts = []
@@ -199,8 +206,7 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
     with torch.no_grad():
         embedding = generate_txn_embedding.model.encode(transaction_text, convert_to_numpy=True)
 
-    # Ensure correct dimensions
-    embedding = embedding[:dimensions]
+    embedding   = embedding[:dimensions]
     
     # Convert to list of floats for Flink
     return embedding.tolist()
@@ -209,19 +215,18 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
 
 
 def main():
-    """
-    Main function to set up and execute the Flink streaming job for transaction embedding generation.
-    """
-    pipeline_name = "Flink_txn_embedding"
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    pipeline_name   = f"Flink_txn_embedding"
+    now             = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"Starting {pipeline_name} - {now}")
 
     # --------------------------------------------------------------------------
     # Some environment settings and a nice Jobname/description "pipeline.name" for flink console
     # --------------------------------------------------------------------------
+
     config = Configuration()
     config.set_string("table.exec.source.idle-timeout", "1s")
-    config.set_string("pipeline.name", pipeline_name)
+    config.set_string(f"pipeline.name", pipeline_name)
 
     # Initialize PyFlink environment
     env = StreamExecutionEnvironment.get_execution_environment()
@@ -237,35 +242,26 @@ def main():
 
     # --------------------------------------------------------------------------
     # Add necessary JAR dependencies for connectors
-    # --------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     postgres_cdc_jar = "file:///opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar" 
     flink_python_jar = "file:///opt/flink/lib/flink-python-1.20.2.jar" 
-    postgres_jdbc_jar = "file:///opt/flink/lib/postgresql-42.7.6.jar"
     
-    table_env.get_config().set("pipeline.jars", f"{postgres_cdc_jar};{flink_python_jar};{postgres_jdbc_jar}")
-
+    table_env.get_config().set("pipeline.jars", f"{postgres_cdc_jar};{flink_python_jar}")
 
     # --------------------------------------------------------------------------
     # Register Postgres Input Catalog
     # --------------------------------------------------------------------------
-    print("Creating catalog c_cdcsource...")
     table_env.execute_sql("""
         CREATE CATALOG c_cdcsource WITH 
         ('type'='generic_in_memory'); 
-    """)
-    
-    # Create the database in the catalog
-    print("Creating database c_cdcsource.demog...")
-    table_env.execute_sql("""
-        CREATE DATABASE IF NOT EXISTS c_cdcsource.demog;
-    """)
+    """)  
 
+    
     # --------------------------------------------------------------------------
     # Create the source table
     # --------------------------------------------------------------------------
-    print("Creating source table c_cdcsource.demog.transactions...")
-    source_table_creation_sql = """
-        CREATE TABLE c_cdcsource.demog.transactions (
+    source_table_creation_sql = f"""
+        CREATE OR REPLACE TEMPORARY TABLE c_cdcsource.demog.transactions (
              _id                            BIGINT              NOT NULL
             ,eventid                        VARCHAR(36)         NOT NULL
             ,transactionid                  VARCHAR(36)         NOT NULL
@@ -317,59 +313,52 @@ def main():
             ,'schema-name'                         = 'public'
             ,'table-name'                          = 'transactions'
             ,'slot.name'                           = 'transactions0'
-            ,'scan.incremental.snapshot.enabled'   = 'true'
-            ,'scan.startup.mode'                   = 'initial'
+            -- experimental feature: incremental snapshot (default off)
+            ,'scan.incremental.snapshot.enabled'   = 'true'               -- experimental feature: incremental snapshot (default off)
+            ,'scan.startup.mode'                   = 'initial'            -- https://nightlies.apache.org/flink/flink-cdc-docs-release-3.1/docs/connectors/flink-sources/postgres-cdc/#startup-reading-position     ,'decoding.plugin.name'                = 'pgoutput'
             ,'decoding.plugin.name'                = 'pgoutput'
         );
     """
 
     table_env.execute_sql(source_table_creation_sql)
-    print("Source table created successfully.")
     
     # --------------------------------------------------------------------------
     # Register Apache Paimon output Catalog
     # --------------------------------------------------------------------------
-    print("Creating Paimon catalog c_paimon...")
     table_env.execute_sql("""
         CREATE CATALOG c_paimon WITH (
             'type'                          = 'paimon'
-            ,'metastore'                    = 'jdbc'                      
-            ,'catalog-key'                  = 'jdbc'
-            ,'uri'                          = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
-            ,'jdbc.user'                    = 'dbadmin'
-            ,'jdbc.password'                = 'dbpassword'
-            ,'jdbc.driver'                  = 'org.postgresql.Driver'
-            ,'warehouse'                    = 's3://warehouse/paimon'      
-            ,'s3.endpoint'                  = 'http://minio:9000'        
-            ,'s3.path-style-access'         = 'true'                     
-            ,'table-default.file.format'    = 'parquet'
+            ,'metastore'                     = 'jdbc'                      
+            ,'catalog-key'                   = 'jdbc'
+            ,'uri'                           = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
+            ,'jdbc.user'                     = 'dbadmin'
+            ,'jdbc.password'                 = 'dbpassword'
+            ,'jdbc.driver'                   = 'org.postgresql.Driver'
+            ,'warehouse'                     = 's3://warehouse/paimon'      
+            ,'s3.endpoint'                   = 'http://minio:9000'        
+            ,'s3.path-style-access'          = 'true'                     
+            ,'table-default.file.format'     = 'parquet'
         );
-    """)
+    """)  
     
-    print("Creating database c_paimon.finflow...")
     table_env.execute_sql("""
         CREATE DATABASE IF NOT EXISTS c_paimon.finflow;
-    """)
+    """)  
 
-    # --------------------------------------------------------------------------
-    # Register the UDF (must be done AFTER the function is defined)
-    # --------------------------------------------------------------------------    
-    print("Registering UDF generate_txn_embedding...")
-    table_env.create_temporary_system_function("generate_txn_embedding", generate_txn_embedding)
-
-    # --------------------------------------------------------------------------
-    # Create statement set for managing multiple insert statements
-    # --------------------------------------------------------------------------
     statement_set = table_env.create_statement_set()
 
     # --------------------------------------------------------------------------
-    # Our Target table - Insert into pre-created sink table
+    # Register the UDF
     # --------------------------------------------------------------------------    
-    # Expected sink table structure (should be created beforehand):
+    table_env.create_temporary_system_function("generate_txn_embedding", generate_txn_embedding)
+
+
+    # --------------------------------------------------------------------------
+    # Our Target table
+    # Insert into pre-created sink table
+    # --------------------------------------------------------------------------    
     # CREATE TABLE c_paimon.finflow.transactions (
     #      _id                            BIGINT              NOT NULL
-    #     ,eventid                        VARCHAR(36)         NOT NULL
-    #     ,transactionid                  VARCHAR(36)         NOT NULL
     #     ,eventtime                      VARCHAR(30)
     #     ,direction                      VARCHAR(8)
     #     ,eventtype                      VARCHAR(10)
@@ -412,13 +401,11 @@ def main():
     #     ,PRIMARY KEY (_id) NOT ENFORCED
     # );
 
-    print("Preparing embedding insert query...")
+
     embedding_insert_query = f"""
         INSERT INTO c_paimon.finflow.transactions
         SELECT 
              _id
-            ,eventid
-            ,transactionid
             ,eventtime
             ,direction
             ,eventtype
@@ -455,7 +442,7 @@ def main():
             ,schemaversion
             ,usercode
             ,generate_txn_embedding(
-                 {DIMENSIONS}
+                 ${dimensions}
                 ,eventtime
                 ,direction
                 ,eventtype
@@ -492,32 +479,32 @@ def main():
                 ,schemaversion
                 ,usercode
             ) AS embedding_vector
-            ,{DIMENSIONS} AS embedding_dimensions
-            ,CURRENT_TIMESTAMP AS embedding_timestamp
+            ${dimensions} AS embedding_dimensions
+            ,CURRENT_TIMESTAMP(3) AS embedding_timestamp
             ,created_at
-        FROM c_cdcsource.demog.transactions
+        FROM postgres_catalog.demog.transactions
     """
 
     statement_set.add_insert_sql(embedding_insert_query)
+    now             = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
+    print(f"Starting transactions embedding pipeline...   - {now}")
     
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-    print(f"Starting transactions embedding pipeline... - {now}")
-    
-    # Execute the statement set
     statement_set.execute().wait()
-    
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-    print(f"Embedding pipeline completed successfully! - {now}")
+#    table_env.execute_sql(embedding_insert_query).wait()
+    now             = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
+    print(f"Embedding pipeline completed successfully!... - {now}")
 
-# end main
+#end main
 
 
 if __name__ == "__main__":
+        
     try:
         main()
+        
     except Exception as err:
         print(f"An unexpected error occurred: {err}")
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
-# end __main__
+        
+    #end try
+#end __main__
