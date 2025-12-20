@@ -47,7 +47,6 @@ sys.path.append('/pyflink/udfs')
 from txn_embed_udf import generate_txn_embedding
 
 dimensions      = 384
-now             = datetime.now()
 model           = 'sentence-transformers/all-MiniLM-L6-v2'
 # sentence-transformers/all-mpnet-base-v2   (768D) - Higher quality slower
 # BAAI/bge-small-en-v1.5                    (384D) - Optimized for retrieval tasks
@@ -222,9 +221,8 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
 
 def main():
 
-    pipeline_name = f"Flink_txn_embedding"
-
-    print(f"Starting {pipeline_name} {now.strftime("%Y-%m-%d %H:%M:%S")}")
+    pipeline_name   = f"Flink_txn_embedding"
+    print(f"Starting {pipeline_name} - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
 
     # --------------------------------------------------------------------------
     # Some environment settings and a nice Jobname/description "pipeline.name" for flink console
@@ -328,25 +326,21 @@ def main():
 
     table_env.execute_sql(source_table_creation_sql)
     
-    
     # --------------------------------------------------------------------------
     # Register Apache Paimon output Catalog
     # --------------------------------------------------------------------------
     table_env.execute_sql("""
         CREATE CATALOG c_paimon WITH (
-             'type'                          = 'paimon'
-            ,'metastore'                     = 'jdbc'                       -- JDBC Based Catalog
+            'type'                          = 'paimon'
+            ,'metastore'                     = 'jdbc'                      
             ,'catalog-key'                   = 'jdbc'
-            -- JDBC connection to PostgreSQL for persistence
-            ,'uri'                           = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon'
+            ,'uri'                           = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
             ,'jdbc.user'                     = 'dbadmin'
             ,'jdbc.password'                 = 'dbpassword'
             ,'jdbc.driver'                   = 'org.postgresql.Driver'
-            -- MinIO S3 configuration with SSL/TLS (if needed)
-            ,'warehouse'                     = 's3://warehouse/paimon'      -- bucket / datastore
-            ,'s3.endpoint'                   = 'http://minio:9000'          -- MinIO endpoint
-            ,'s3.path-style-access'          = 'true'                       -- Required for MinIO
-            -- Default table properties
+            ,'warehouse'                     = 's3://warehouse/paimon'      
+            ,'s3.endpoint'                   = 'http://minio:9000'        
+            ,'s3.path-style-access'          = 'true'                     
             ,'table-default.file.format'     = 'parquet'
         );
     """)  
@@ -404,10 +398,10 @@ def main():
     #     ,numberoftransactions           INT
     #     ,schemaversion                  INT
     #     ,usercode                       VARCHAR(4)
-    #     ,embedding_vector              ARRAY<FLOAT>
-    #     ,embedding_dimensions          INT
-    #     ,embedding_timestamp           TIMESTAMP_LTZ(3)  
-    #     ,created_at                    TIMESTAMP_LTZ(3)
+    #     ,embedding_vector               ARRAY<FLOAT>
+    #     ,embedding_dimensions           INT
+    #     ,embedding_timestamp            TIMESTAMP_LTZ(3)  
+    #     ,created_at                     TIMESTAMP_LTZ(3)
     #     ,PRIMARY KEY (_id) NOT ENFORCED
     # );
 
@@ -496,11 +490,11 @@ def main():
     """
 
     statement_set.add_insert_sql(embedding_insert_query)
-    print("Starting transactions embedding pipeline...")
+    print(f"Starting transactions embedding pipeline...   - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
     
     statement_set.execute().wait()
 #    table_env.execute_sql(embedding_insert_query).wait()
-    print("Embedding pipeline completed successfully!")
+    print(f"Embedding pipeline completed successfully!... - {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
 
 #end main
 
