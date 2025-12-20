@@ -61,8 +61,18 @@ def generate_ah_embedding(dimensions,
                           mobilephonenumber):
     """
     Generate 384-dimensional embeddings for user profiles using sentence-transformers.
+    
     This UDF lazy-loads the model to avoid serialization issues.
+
+    Args:
+        embedding dimensions,
+        accountHolder details,
+        
+    Returns:
+        array of float: ....
     """
+    
+    
     
     # Use a class variable to cache the model across invocations
     if not hasattr(generate_ah_embedding, 'model'):
