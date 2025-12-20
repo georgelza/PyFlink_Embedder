@@ -29,3 +29,4 @@ old/
 devlab/data/
 infrastructure/flink/stage
 shadowtraffic/conf/license.env
+devlab/pyflink/__pycache__
