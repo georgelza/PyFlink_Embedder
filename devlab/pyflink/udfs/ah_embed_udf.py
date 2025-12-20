@@ -117,3 +117,4 @@ def generate_ah_embedding(dimensions,
     
     # Convert to list of floats for Flink
     return embedding.tolist()
+# end generate_ah_embedding

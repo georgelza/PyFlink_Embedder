@@ -7,6 +7,7 @@ USE CATALOG c_paimon;
 
 USE ctas;
 
+-- Environment is configured using the -s /creFlinkFlows/config/sql-client-config.yaml
 -- SET 'execution.checkpointing.interval'   = '60s';
 -- SET 'table.exec.sink.upsert-materialize' = 'NONE';
 

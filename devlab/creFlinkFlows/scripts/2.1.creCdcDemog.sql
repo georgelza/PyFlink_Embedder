@@ -9,6 +9,8 @@ USE demog;
 
 
 
+
+
 CREATE OR REPLACE TABLE accountholders (
      _id                BIGINT                  NOT NULL
     ,nationalid         VARCHAR(16)             NOT NULL

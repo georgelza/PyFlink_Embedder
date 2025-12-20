@@ -9,6 +9,8 @@ USE finflow;
 
 
 
+
+
 CREATE OR REPLACE TABLE accountholders (
      _id                           BIGINT
     ,nationalid                    VARCHAR(16)

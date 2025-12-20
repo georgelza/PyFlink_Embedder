@@ -16,9 +16,16 @@ SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql';
 
 -- make crefinflow
 -- Execute script 3: 
--- Create our embedding output table
+-- Create our flat structured embedding output table
 -- 3.1
-SOURCE '/creFlinkFlows/scripts/3.1.creTargetDemog.sql';
+SOURCE '/creFlinkFlows/scripts/3.1.creTargetFinflow.sql';
+
+
+-- make crecmplx
+-- Execute script 4: 
+-- Create our complex structured target output tables
+-- 3.2
+SOURCE '/creFlinkFlows/scripts/3.2.creTargetCmplx.sql';
 
 
 -- Set common configurations
@@ -29,24 +36,28 @@ SET 'execution.planner.planner'         = 'blink';
 SET 'execution.planner.result-mode'     = 'table';
 
 
--- make insfinflow
--- Execute script 4: 
--- Insert our data into output table, with Pyflink embedding routine included
--- 
--- 4.1 or This could possible all be build into the PyFlink Routine that get's deployed onto the c_cdcsource.demog table
--- This will first need to 'recreate our c_cdcsource.demog* tables as step 1 in the script before executing the 
--- Insert into () select () from ...
---
-SOURCE '/creFlinkFlows/scripts/4.1.creInsertsDemog.sql';
-
-
+-- make ins_finflow
 -- Execute script 5: 
--- Create Structures as per 3.2
+-- Insert our data into output table, using insert statement with inline Pyflink embedding routine called.
+-- 4.1 
+--
+SOURCE '/creFlinkFlows/scripts/4.1.creInsertsAh.sql';
 
 
+-- make ins_ah
 -- Execute script 6: 
--- Execute Insert as per 4.2 
+-- Insert our data into output table, using Pyflink job, with Pyflink embedding routine included
+-- 4.2
+SOURCE '/creFlinkFlows/scripts/4.2.creInsertsTxn.sql';
 
 
 -- Execute script 7: 
--- Execute CTAS as per 4.3
+-- Insert records into our two Complex structures tables (c_paimon.cmplx.*), source from 4.1 and 4.2 
+-- 4.3
+SOURCE '/creFlinkFlows/scripts/4.3.creInsertsCmplx.sql';
+
+
+-- Execute script 8: 
+-- Execute CTAS to create two tables in c_paimon.ctas using CTAS pattern, to potentially form part of an additional outbound data flow 
+-- 4.4
+SOURCE '/creFlinkFlows/scripts/4.4.creCtas.sql';
