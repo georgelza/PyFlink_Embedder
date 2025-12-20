@@ -20,12 +20,12 @@ $SQL_CLIENT \
 project/
 │
 ├── scripts/
-│   ├── 02_register_ah_embed_udfs.sql
-│   └── 03_register_txn_embed_udfs.sql
+│   ├── register_ah_embed_udfs.sql
+│   └── register_txn_embed_udfs.sql
 │
 ├── udfs/
-│   ├── 02_ah_embed_udf.py
-│   └── 03_txn_embed_udf.py
+│   ├── ah_embed_udf.py
+│   └── txn_embed_udf.py
 │
 ├── ah_embed.cmd
 ├── txn_embed.cmd

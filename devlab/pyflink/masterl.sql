@@ -10,9 +10,8 @@ SOURCE '/creFlinkFlows/scripts/3.1.creTargetDemog.sql';
 SOURCE '/creFlinkFlows/scripts/3.2.creCmplxTarget.sql';
 
 -- Register UDFs
-SOURCE '/pyflink/scripts/02_register_ah_embed_udfs.sql';
-SOURCE '/pyflink/scripts/03_register_txn_embed_udfs.sql';
-SOURCE '/pyflink/scripts/04_register_udfs.sql';
+SOURCE '/pyflink/scripts/register_ah_embed_udfs.sql';
+SOURCE '/pyflink/scripts/register_txn_embed_udfs.sql';
 
 -- Use UDFs in queries
 -- SOURCE '/pyflink/scripts/????.sql';
