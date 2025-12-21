@@ -82,7 +82,7 @@ crecdc:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/2.1.creCdcDemog.sql
 
 crefinflow:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.1.creTargetDemog.sql
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.1.creTargetFinflow.sql
 
 crecmplx:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creCmplxTarget.sql

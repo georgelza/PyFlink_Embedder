@@ -125,4 +125,5 @@ def generate_embedding(DIMENSIONS,
     
     # Convert to list of floats for Flink
     return embedding.tolist()
+
 # end generate_embedding
