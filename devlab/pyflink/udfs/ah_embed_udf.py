@@ -2,17 +2,15 @@
 #
 #
 #   Project             :   Account Holder... Streaming account holder embedding vectorizer 
-#
 #   File                :   ah_embed_udf.py
-#
 #   Created             :   8 Dec 2025
-#
 #   Description         :   Calculate vector values for record arriving in source table, outputting the columns + vector 
 #                       :   to a new target table
 #                       :
 #   Misc Reading        :   https://www.kdnuggets.com/2025/05/confluent/a-data-scientists-guide-to-data-streaming
 #                       :   https://www.youtube.com/watch?v=Tn4n9xKE1ug
 #                       :   https://www.decodable.co/blog/a-hands-on-introduction-to-pyflink
+#
 #
 #
 #
@@ -27,19 +25,16 @@ Standalone Python UDF for generating account holder embeddings
 Can be registered in Flink SQL using CREATE TEMPORARY FUNCTION
 """
 
+from pyflink.datastream import StreamExecutionEnvironment
 from pyflink.table import EnvironmentSettings, TableEnvironment
+from pyflink.table import StreamTableEnvironment, EnvironmentSettings
 from pyflink.table.udf import udf
 from pyflink.table import DataTypes
-from pyflink.datastream import StreamExecutionEnvironment
 from sentence_transformers import SentenceTransformer
+from datetime import datetime
 import torch
 import sys
 
-# Add your UDF path to Python path
-sys.path.append('/pyflink/udfs')
-
-# Import your UDF
-from ah_embed_udf import generate_ah_embedding
 
 # Create table environment
 env             = StreamExecutionEnvironment.get_execution_environment()
@@ -48,17 +43,23 @@ table_env       = TableEnvironment.create(env_settings)
 
 # Register the UDF
 table_env.create_temporary_function(
-    "generate_ah_embedding", 
-    generate_ah_embedding
+    "generate_embedding", 
+    generate_embedding
 )
 
 
-# Embedding model configuration
-model           = 'sentence-transformers/all-MiniLM-L6-v2'
+# --------------------------------------------------------------------------
+# Constants
+# --------------------------------------------------------------------------
+#DIMENSIONS      = 384
+MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
 
 
+# --------------------------------------------------------------------------
+# Define UDF for embedding generation
+# --------------------------------------------------------------------------
 @udf(result_type=DataTypes.ARRAY(DataTypes.FLOAT()))
-def generate_ah_embedding(dimensions,
+def generate_embedding(DIMENSIONS,
                           firstname, 
                           lastname, 
                           dob, 
@@ -70,7 +71,6 @@ def generate_ah_embedding(dimensions,
                           mobilephonenumber):
     """
         Generate 384-dimensional embeddings for user profiles using sentence-transformers.
-        
         This UDF lazy-loads the model to avoid serialization issues.
 
         Args:
@@ -83,9 +83,9 @@ def generate_ah_embedding(dimensions,
     
     
     # Use a class variable to cache the model across invocations
-    if not hasattr(generate_ah_embedding, 'model'):
-        generate_ah_embedding.model = SentenceTransformer(model)
-        generate_ah_embedding.model.eval()
+    if not hasattr(generate_embedding, 'model'):
+        generate_embedding.model = SentenceTransformer(MODEL)
+        generate_embedding.model.eval()
     
     # Build text representation of the user profile
     transaction_parts = []
@@ -118,11 +118,11 @@ def generate_ah_embedding(dimensions,
     
     # Generate embedding
     with torch.no_grad():
-        embedding = generate_ah_embedding.model.encode(transaction_text, convert_to_numpy=True)
+        embedding = generate_embedding.model.encode(transaction_text, convert_to_numpy=True)
     
-    # Truncate to target dimensions
-    embedding = embedding[:dimensions]
+    # Ensure correct dimensions
+    embedding = embedding[:DIMENSIONS]
     
     # Convert to list of floats for Flink
     return embedding.tolist()
-# end generate_ah_embedding
+# end generate_embedding

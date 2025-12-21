@@ -28,14 +28,14 @@ from pyflink.table import DataTypes
 from pyflink.common import Configuration
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
-import sys
 import torch
+import sys
 
 
 # --------------------------------------------------------------------------
 # Constants
 # --------------------------------------------------------------------------
-DIMENSIONS      = 384
+#DIMENSIONS      = 384
 MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
 
 
@@ -43,7 +43,7 @@ MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
 # Define UDF for embedding generation
 # --------------------------------------------------------------------------
 @udf(result_type=DataTypes.ARRAY(DataTypes.FLOAT()))
-def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creationdate,
+def generate_embedding(DIMENSIONS, eventtime, direction, eventtype, creationdate,
                            accountholdernationalid, accountholderaccount,
                            counterpartynationalid, counterpartyaccount,
                            tenantid, fromid, accountagentid, fromfibranchid,
@@ -56,14 +56,21 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
                            transactiontype, verificationresult, numberoftransactions,
                            schemaversion, usercode):
     """
-    Generate 384-dimensional embeddings for financial transactions using sentence-transformers.
-    This UDF lazy-loads the model to avoid serialization issues.
+        Generate 384-dimensional embeddings for financial transactions using sentence-transformers.
+        This UDF lazy-loads the model to avoid serialization issues.
+
+        Args:
+            embedding dimensions,
+            transaction details,
+            
+        Returns:
+            array of float: ....
     """
     
     # Use a class variable to cache the model across invocations
-    if not hasattr(generate_txn_embedding, 'model'):
-        generate_txn_embedding.model = SentenceTransformer(MODEL)
-        generate_txn_embedding.model.eval()
+    if not hasattr(generate_embedding, 'model'):
+        generate_embedding.model = SentenceTransformer(MODEL)
+        generate_embedding.model.eval()
     
     # Build a structured text representation of the transaction
     transaction_parts = []
@@ -144,19 +151,19 @@ def generate_txn_embedding(dimensions, eventtime, direction, eventtype, creation
     
     # Handle empty transaction
     if not transaction_text.strip():
-        transaction_text = "Unknown transaction"
+        transaction_text = "Unknown transaction profile"
     
     # Generate embedding
     with torch.no_grad():
-        embedding = generate_txn_embedding.model.encode(transaction_text, convert_to_numpy=True)
+        embedding = generate_embedding.model.encode(transaction_text, convert_to_numpy=True)
 
     # Ensure correct dimensions
-    embedding = embedding[:dimensions]
+    embedding = embedding[:DIMENSIONS]
     
     # Convert to list of floats for Flink
     return embedding.tolist()
 
-# end generate_txn_embedding
+# end generate_embedding
 
 
 def main():
@@ -193,8 +200,8 @@ def main():
     # --------------------------------------------------------------------------
     # Add JAR dependencies
     # --------------------------------------------------------------------------
-    postgres_cdc_jar = "file:///opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar" 
-    flink_python_jar = "file:///opt/flink/lib/flink-python-1.20.2.jar"
+    postgres_cdc_jar  = "file:///opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar" 
+    flink_python_jar  = "file:///opt/flink/lib/flink-python-1.20.2.jar"
     postgres_jdbc_jar = "file:///opt/flink/lib/postgresql-42.7.6.jar"
     
     table_env.get_config().set("pipeline.jars", f"{postgres_cdc_jar};{flink_python_jar};{postgres_jdbc_jar}")
