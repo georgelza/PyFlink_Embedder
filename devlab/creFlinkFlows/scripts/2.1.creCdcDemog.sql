@@ -1,14 +1,10 @@
 -- scripts/2.1.creCdcDemog.sql
 -- Inbound from PostgreSQL via CDC Process
 -- Main demog inbound tables, will be used as Pyflink source
--- see 1.1
+
 USE CATALOG c_cdcsource;
-
 CREATE DATABASE IF NOT EXISTS demog;  
-
 USE demog;
-
-
 
 
 

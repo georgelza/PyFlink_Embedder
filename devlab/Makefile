@@ -78,29 +78,20 @@ fsql:
 cat:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/1.1.creCat.sql
 
-crecdc:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/2.1.creCdcDemog.sql
-
-crefinflow:
+finflow:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.1.creTargetFinflow.sql
 
-crecmplx:
+cmplx:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creTargetCmplx.sql
 
-# Register our UDF's before continuing.
-register_ah_udf:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /pyflink/scripts/register_ah_embed_udfs.sql
-
-register_txn_udf:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /pyflink/scripts/register_txn_embed_udfs.sql
-
 # back to the scheduled programming
-ins_ah:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsAh.sql -s /creFlinkFlows/config/sql-client-config.yaml
+ah:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsAh.sql
 
-#ins_txn:
+#txn:
 # Placeholder
 # Executed by executing the txn_embed.cmd job at the Jobmanager CLI
+
 
 ins_cmplx:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.3.creInsertsCmplx.sql -s /creFlinkFlows/config/sql-client-config.yaml

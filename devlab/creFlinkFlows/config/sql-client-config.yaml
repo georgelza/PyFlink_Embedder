@@ -3,7 +3,6 @@
 execution:
   planner: blink
   type: streaming
-  result-mode: table
 
 configuration:
   execution.checkpointing.interval: 60s

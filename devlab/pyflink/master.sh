@@ -13,9 +13,9 @@ $SQL_CLIENT \
   -pyexec /usr/bin/python3 \
   -pyfs file:///pyflink/udfs \
   -f master.sql
-```
 
-## **Complete Example Structure**
+
+# Complete Example Structure**
 ```
 project/
 │

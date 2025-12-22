@@ -104,19 +104,15 @@ def generate_ah_embedding(target_dimensions
         # Generate embedding
         with torch.no_grad():
             embedding = generate_ah_embedding.model.encode(transaction_text, convert_to_numpy=True)
-        
-        final_size = int(target_dimensions)
-        
-        result = embedding[:final_size].astype('float64').tolist()
-        
-#        print(result)
-                
-        # Convert to list of floats for Flink
-        return result
+            #print(embedding)
 
+        final_size = int(target_dimensions)
+                                
+        # Convert to list of floats for Flink
+        return embedding[:final_size].astype('float64').tolist()
+    
     except Exception as e:
         print(f"UDF Error: {str(e)}", file=sys.stderr)
         raise e
-
 
 # end generate_ah_embedding

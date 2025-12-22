@@ -1,9 +1,8 @@
 -- Output embedded data flat structure into c_paimon.ctas as a select from the c_paimon.finflow
 -- Might be used to push data to another output destination
 -- See 4.1
+
 USE CATALOG c_paimon;
-
-
 
 USE ctas;
 

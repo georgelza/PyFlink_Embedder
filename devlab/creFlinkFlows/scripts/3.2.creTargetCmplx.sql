@@ -1,16 +1,10 @@
--- scripts/3.1.creTargetFinflow.sql
--- Outbound
--- 
--- To be complex version of our embedded flat structured record  
+-- scripts/3.2.creTargetCmplx.sql
+-- Output - To be complex version of our embedded flat structured record
+--  
 
--- See 2.1
 USE CATALOG c_paimon;
 
-
-
 USE cmplx;
-
-
 
 
 

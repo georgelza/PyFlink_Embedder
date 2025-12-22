@@ -6,36 +6,13 @@
 
 
 
--- Test with source table (preview)
+-- Any time we want to use the demog objets we need to recreate them
+-- as they're stored in Generic in memory.
 SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql'; 
 
-
-SELECT 
-     _id                
-    ,nationalid         
-    ,firstname          
-    ,lastname           
-    ,generate_ah_embedding(
-         384
-        ,firstname 
-        ,lastname 
-        ,dob
-        ,gender
-        ,children 
-        ,address 
-        ,accounts
-        ,emailaddress 
-        ,mobilephonenumber
-    )                       AS embedding_vector
-    ,CURRENT_TIMESTAMP      AS embedding_timestamp
-    ,created_at
-FROM c_cdcsource.demog.accountholders;
-
 -- CAST(CURRENT_TIMESTAMP AS TIMESTAMP(3)) AS embedding_timestamp;
-
-USE CATALOG c_cdcsource;
-CREATE DATABASE IF NOT EXISTS demog;  
-USE demog;
+-- As we're creating the function on the cdc table in c_cdcsource we need to recreate it, over and over... :(
+SOURCE '/pyflink/scripts/register_ah_embed_udf.sql'; 
 
 -- 
 SET 'execution.checkpointing.interval'  = '60s';
@@ -70,3 +47,4 @@ SELECT
     ,CURRENT_TIMESTAMP      AS embedding_timestamp
     ,created_at
 FROM c_cdcsource.demog.accountholders;
+

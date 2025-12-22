@@ -1,16 +1,10 @@
 -- scripts/3.1.creTargetFinflow.sql
--- Outbound
--- 
--- Output Tables for our embedding process, source from CDC tables
+-- Output - Tables for our embedding process, source from CDC tables
+--
 
--- See 2.1
 USE CATALOG c_paimon;
 
-
-
 USE finflow;
-
-
 
 
 
@@ -32,6 +26,7 @@ CREATE OR REPLACE TABLE accountholders (
     ,created_at                    TIMESTAMP_LTZ(3)
     ,PRIMARY KEY (_id) NOT ENFORCED
 );
+
 
 CREATE OR REPLACE TABLE transactions (
      _id                            BIGINT              NOT NULL

@@ -157,16 +157,13 @@ def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, c
         # Generate embedding
         with torch.no_grad():
             embedding = generate_txn_embedding.model.encode(transaction_text, convert_to_numpy=True)
+            #print(embedding)
 
-        # Ensure correct dimensions
-        final_size  = int(target_dimensions)
-        result      = embedding[:final_size].astype('float64').tolist()
-        
-#       print(result)
-                
+        final_size = int(target_dimensions)
+                                
         # Convert to list of floats for Flink
-        return result
-
+        return embedding[:final_size].astype('float64').tolist()
+    
     except Exception as e:
         print(f"UDF Error: {str(e)}", file=sys.stderr)
         raise e

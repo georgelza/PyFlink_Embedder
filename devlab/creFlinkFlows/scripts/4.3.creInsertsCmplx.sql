@@ -1,9 +1,8 @@
--- Transform c_paimon.finflow.* into complex JSON structured data structures.
+-- scripts/4.3.creInsertsCmplx.sql
+-- 
+--
 
--- See 4.1
 USE CATALOG c_paimon;
-
-
 
 USE cmplx;
 
