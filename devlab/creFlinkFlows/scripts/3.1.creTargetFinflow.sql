@@ -1,3 +1,6 @@
+-- scripts/3.1.creTargetFinflow.sql
+-- Outbound
+-- 
 -- Output Tables for our embedding process, source from CDC tables
 
 -- See 2.1
@@ -23,7 +26,7 @@ CREATE OR REPLACE TABLE accountholders (
     ,accounts                      STRING
     ,emailaddress                  VARCHAR(100)
     ,mobilephonenumber             VARCHAR(20)
-    ,embedding_vector              ARRAY<FLOAT>
+    ,embedding_vector              ARRAY<DOUBLE>
     ,embedding_dimensions          INT
     ,embedding_timestamp           TIMESTAMP_LTZ(3)    
     ,created_at                    TIMESTAMP_LTZ(3)
@@ -69,10 +72,10 @@ CREATE OR REPLACE TABLE transactions (
     ,numberoftransactions           INT
     ,schemaversion                  INT
     ,usercode                       VARCHAR(4)
-    ,embedding_vector              ARRAY<FLOAT>
-    ,embedding_dimensions          INT
-    ,embedding_timestamp           TIMESTAMP_LTZ(3)  
-    ,created_at                    TIMESTAMP_LTZ(3)
+    ,embedding_vector               ARRAY<DOUBLE>
+    ,embedding_dimensions           INT
+    ,embedding_timestamp            TIMESTAMP_LTZ(3)  
+    ,created_at                     TIMESTAMP_LTZ(3)
     ,PRIMARY KEY (_id) NOT ENFORCED
 );
 

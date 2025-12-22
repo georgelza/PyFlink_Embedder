@@ -85,7 +85,7 @@ crefinflow:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.1.creTargetFinflow.sql
 
 crecmplx:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creCmplxTarget.sql
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creTargetCmplx.sql
 
 # Register our UDF's before continuing.
 register_ah_udf:

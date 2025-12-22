@@ -394,3 +394,9 @@ fs:
   aws:
     credentials:
       provider: org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+
+python: 
+  client:
+    executable: python3
+  executable: python3
+  files: /pyflink/udfs

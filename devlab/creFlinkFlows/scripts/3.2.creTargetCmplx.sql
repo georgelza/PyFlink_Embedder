@@ -1,3 +1,6 @@
+-- scripts/3.1.creTargetFinflow.sql
+-- Outbound
+-- 
 -- To be complex version of our embedded flat structured record  
 
 -- See 2.1
@@ -38,7 +41,7 @@ CREATE OR REPLACE TABLE accountholders (
     >>
     ,eMailAddress                   VARCHAR(100)
     ,mobilePhoneNumber              VARCHAR(20)
-    ,embedding_vector               ARRAY<FLOAT>
+    ,embedding_vector               ARRAY<DOUBLE>
     ,embedding_dimensions           INT
     ,embedding_timestamp            TIMESTAMP_LTZ(3)    
     ,created_at                     TIMESTAMP_LTZ(3)
@@ -115,7 +118,7 @@ CREATE OR REPLACE TABLE transactions (
     ,numberoftransactions           INTEGER
     ,schemaversion                  INTEGER
     ,usercode                       VARCHAR(4)
-    ,embedding_vector               ARRAY<FLOAT>
+    ,embedding_vector               ARRAY<DOUBLE>
     ,embedding_dimensions           INT
     ,embedding_timestamp            TIMESTAMP_LTZ(3)    
     ,created_at                     TIMESTAMP_LTZ(3)

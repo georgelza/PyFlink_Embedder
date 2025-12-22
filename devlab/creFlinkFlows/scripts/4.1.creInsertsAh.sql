@@ -17,7 +17,8 @@ SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql';
 
 SET 'pipeline.name' = 'Emded & Persist into Paimon (finflow): accountholders';
 
-INSERT INTO accountholders (
+INSERT INTO c_paimon.finflow.accountholders 
+SELECT 
      _id                
     ,nationalid         
     ,firstname          
@@ -29,23 +30,6 @@ INSERT INTO accountholders (
     ,accounts           
     ,emailaddress       
     ,mobilephonenumber  
-    ,embedding_vector
-    ,embedding_dimensions
-    ,embedding_timestamp
-    ,created_at
-)
-SELECT 
-     _id
-    ,nationalid         
-    ,firstname
-    ,lastname
-    ,dob
-    ,gender
-    ,children
-    ,address
-    ,accounts
-    ,emailaddress
-    ,mobilephonenumber
     ,generate_ah_embedding(
          384
         ,firstname 
@@ -55,11 +39,11 @@ SELECT
         ,children 
         ,address 
         ,accounts
-        ,emailaddress
+        ,emailaddress 
         ,mobilephonenumber
-    ) AS embedding_vector
-    ,384 AS embedding_dimensions
-    ,CURRENT_TIMESTAMP(3) AS embedding_timestamp
+    )                       AS embedding_vector
+    ,384                    AS embedding_dimensions
+    ,CURRENT_TIMESTAMP      AS embedding_timestamp
     ,created_at
 FROM c_cdcsource.demog.accountholders;
 

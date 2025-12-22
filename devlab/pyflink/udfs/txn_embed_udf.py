@@ -35,15 +35,15 @@ import sys
 # --------------------------------------------------------------------------
 # Constants
 # --------------------------------------------------------------------------
-#DIMENSIONS      = 384
+DIMENSIONS      = 384
 MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
 
 
 # --------------------------------------------------------------------------
 # Define UDF for embedding generation
 # --------------------------------------------------------------------------
-@udf(result_type=DataTypes.ARRAY(DataTypes.FLOAT()))
-def generate_embedding(DIMENSIONS, eventtime, direction, eventtype, creationdate,
+@udf(result_type=DataTypes.ARRAY(DataTypes.DOUBLE()))
+def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, creationdate,
                            accountholdernationalid, accountholderaccount,
                            counterpartynationalid, counterpartyaccount,
                            tenantid, fromid, accountagentid, fromfibranchid,
@@ -56,7 +56,7 @@ def generate_embedding(DIMENSIONS, eventtime, direction, eventtype, creationdate
                            transactiontype, verificationresult, numberoftransactions,
                            schemaversion, usercode):
     """
-        Generate 384-dimensional embeddings for financial transactions using sentence-transformers.
+        Generate <target_dimensions>-dimensional embeddings for financial transactions using sentence-transformers.
         This UDF lazy-loads the model to avoid serialization issues.
 
         Args:
@@ -67,101 +67,109 @@ def generate_embedding(DIMENSIONS, eventtime, direction, eventtype, creationdate
             array of float: ....
     """
     
-    # Use a class variable to cache the model across invocations
-    if not hasattr(generate_embedding, 'model'):
-        generate_embedding.model = SentenceTransformer(MODEL)
-        generate_embedding.model.eval()
-    
-    # Build a structured text representation of the transaction
-    transaction_parts = []
-    
-    if eventtime:
-        transaction_parts.append(f"Event time: {eventtime}")
-    if direction:
-        transaction_parts.append(f"Direction: {direction}")
-    if eventtype:
-        transaction_parts.append(f"Event type: {eventtype}")
-    if creationdate:
-        transaction_parts.append(f"Creation date: {creationdate}")
-    if accountholdernationalid:
-        transaction_parts.append(f"Account holder national ID: {accountholdernationalid}")
-    if accountholderaccount:
-        transaction_parts.append(f"Account holder account: {accountholderaccount}")
-    if counterpartynationalid:
-        transaction_parts.append(f"Counterparty national ID: {counterpartynationalid}")
-    if counterpartyaccount:
-        transaction_parts.append(f"Counterparty account: {counterpartyaccount}")
-    if tenantid:
-        transaction_parts.append(f"Tenant ID: {tenantid}")
-    if fromid:
-        transaction_parts.append(f"From ID: {fromid}")
-    if accountagentid:
-        transaction_parts.append(f"Account agent ID: {accountagentid}")
-    if fromfibranchid:
-        transaction_parts.append(f"From FI branch ID: {fromfibranchid}")
-    if accountnumber:
-        transaction_parts.append(f"Account number: {accountnumber}")
-    if toid:
-        transaction_parts.append(f"To ID: {toid}")
-    if accountidcode:
-        transaction_parts.append(f"Account ID code: {accountidcode}")
-    if counterpartyagentid:
-        transaction_parts.append(f"Counterparty agent ID: {counterpartyagentid}")
-    if tofibranchid:
-        transaction_parts.append(f"To FI branch ID: {tofibranchid}")
-    if counterpartynumber:
-        transaction_parts.append(f"Counterparty number: {counterpartynumber}")
-    if counterpartyidcode:
-        transaction_parts.append(f"Counterparty ID code: {counterpartyidcode}")
-    if amount:
-        transaction_parts.append(f"Amount: {amount}")
-    if msgtype:
-        transaction_parts.append(f"Message type: {msgtype}")
-    if settlementclearingsystemcode:
-        transaction_parts.append(f"Settlement clearing system code: {settlementclearingsystemcode}")
-    if paymentclearingsystemreference:
-        transaction_parts.append(f"Payment clearing system reference: {paymentclearingsystemreference}")
-    if requestexecutiondate:
-        transaction_parts.append(f"Request execution date: {requestexecutiondate}")
-    if settlementdate:
-        transaction_parts.append(f"Settlement date: {settlementdate}")
-    if destinationcountry:
-        transaction_parts.append(f"Destination country: {destinationcountry}")
-    if localinstrument:
-        transaction_parts.append(f"Local instrument: {localinstrument}")
-    if msgstatus:
-        transaction_parts.append(f"Message status: {msgstatus}")
-    if paymentmethod:
-        transaction_parts.append(f"Payment method: {paymentmethod}")
-    if settlementmethod:
-        transaction_parts.append(f"Settlement method: {settlementmethod}")
-    if transactiontype:
-        transaction_parts.append(f"Transaction type: {transactiontype}")
-    if verificationresult:
-        transaction_parts.append(f"Verification result: {verificationresult}")
-    if numberoftransactions is not None:
-        transaction_parts.append(f"Number of transactions: {numberoftransactions}")
-    if schemaversion is not None:
-        transaction_parts.append(f"Schema version: {schemaversion}")
-    if usercode:
-        transaction_parts.append(f"User code: {usercode}")
-    
-    # Combine all parts into a single text
-    transaction_text = ". ".join(transaction_parts)
-    
-    # Handle empty transaction
-    if not transaction_text.strip():
-        transaction_text = "Unknown transaction profile"
-    
-    # Generate embedding
-    with torch.no_grad():
-        embedding = generate_embedding.model.encode(transaction_text, convert_to_numpy=True)
+    try:
+        # Use a class variable to cache the model across invocations
+        if not hasattr(generate_txn_embedding, 'model'):
+            generate_txn_embedding.model = SentenceTransformer(MODEL)
+            generate_txn_embedding.model.eval()
+        
+        # Build a structured text representation of the transaction
+        transaction_parts = []
+        
+        if eventtime:
+            transaction_parts.append(f"Event time: {eventtime}")
+        if direction:
+            transaction_parts.append(f"Direction: {direction}")
+        if eventtype:
+            transaction_parts.append(f"Event type: {eventtype}")
+        if creationdate:
+            transaction_parts.append(f"Creation date: {creationdate}")
+        if accountholdernationalid:
+            transaction_parts.append(f"Account holder national ID: {accountholdernationalid}")
+        if accountholderaccount:
+            transaction_parts.append(f"Account holder account: {accountholderaccount}")
+        if counterpartynationalid:
+            transaction_parts.append(f"Counterparty national ID: {counterpartynationalid}")
+        if counterpartyaccount:
+            transaction_parts.append(f"Counterparty account: {counterpartyaccount}")
+        if tenantid:
+            transaction_parts.append(f"Tenant ID: {tenantid}")
+        if fromid:
+            transaction_parts.append(f"From ID: {fromid}")
+        if accountagentid:
+            transaction_parts.append(f"Account agent ID: {accountagentid}")
+        if fromfibranchid:
+            transaction_parts.append(f"From FI branch ID: {fromfibranchid}")
+        if accountnumber:
+            transaction_parts.append(f"Account number: {accountnumber}")
+        if toid:
+            transaction_parts.append(f"To ID: {toid}")
+        if accountidcode:
+            transaction_parts.append(f"Account ID code: {accountidcode}")
+        if counterpartyagentid:
+            transaction_parts.append(f"Counterparty agent ID: {counterpartyagentid}")
+        if tofibranchid:
+            transaction_parts.append(f"To FI branch ID: {tofibranchid}")
+        if counterpartynumber:
+            transaction_parts.append(f"Counterparty number: {counterpartynumber}")
+        if counterpartyidcode:
+            transaction_parts.append(f"Counterparty ID code: {counterpartyidcode}")
+        if amount:
+            transaction_parts.append(f"Amount: {amount}")
+        if msgtype:
+            transaction_parts.append(f"Message type: {msgtype}")
+        if settlementclearingsystemcode:
+            transaction_parts.append(f"Settlement clearing system code: {settlementclearingsystemcode}")
+        if paymentclearingsystemreference:
+            transaction_parts.append(f"Payment clearing system reference: {paymentclearingsystemreference}")
+        if requestexecutiondate:
+            transaction_parts.append(f"Request execution date: {requestexecutiondate}")
+        if settlementdate:
+            transaction_parts.append(f"Settlement date: {settlementdate}")
+        if destinationcountry:
+            transaction_parts.append(f"Destination country: {destinationcountry}")
+        if localinstrument:
+            transaction_parts.append(f"Local instrument: {localinstrument}")
+        if msgstatus:
+            transaction_parts.append(f"Message status: {msgstatus}")
+        if paymentmethod:
+            transaction_parts.append(f"Payment method: {paymentmethod}")
+        if settlementmethod:
+            transaction_parts.append(f"Settlement method: {settlementmethod}")
+        if transactiontype:
+            transaction_parts.append(f"Transaction type: {transactiontype}")
+        if verificationresult:
+            transaction_parts.append(f"Verification result: {verificationresult}")
+        if numberoftransactions is not None:
+            transaction_parts.append(f"Number of transactions: {numberoftransactions}")
+        if schemaversion is not None:
+            transaction_parts.append(f"Schema version: {schemaversion}")
+        if usercode:
+            transaction_parts.append(f"User code: {usercode}")
+        
+        # Combine all parts into a single text
+        transaction_text = ". ".join(transaction_parts)
+        
+        # Handle empty transaction
+        if not transaction_text.strip():
+            transaction_text = "Unknown transaction profile"
+        
+        # Generate embedding
+        with torch.no_grad():
+            embedding = generate_txn_embedding.model.encode(transaction_text, convert_to_numpy=True)
 
-    # Ensure correct dimensions
-    embedding = embedding[:DIMENSIONS]
-    
-    # Convert to list of floats for Flink
-    return embedding.tolist()
+        # Ensure correct dimensions
+        final_size  = int(target_dimensions)
+        result      = embedding[:final_size].astype('float64').tolist()
+        
+#       print(result)
+                
+        # Convert to list of floats for Flink
+        return result
+
+    except Exception as e:
+        print(f"UDF Error: {str(e)}", file=sys.stderr)
+        raise e
 
 # end generate_embedding
 
@@ -170,10 +178,13 @@ def main():
     """
     Main function to set up and execute the Flink streaming job for transaction embedding generation.
     """
-    pipeline_name = "Flink_txn_embedding"
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    pipeline_name   = "Flink_txn_embedding"
+    now             = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     print(f"Starting {pipeline_name} - {now}")
 
+    target_dimensions = DIMENSIONS
+    
     # --------------------------------------------------------------------------
     # Environment settings
     # --------------------------------------------------------------------------
@@ -360,7 +371,7 @@ def main():
             ,schemaversion
             ,usercode
             ,generate_txn_embedding(
-                 {DIMENSIONS}
+                 {target_dimensions}
                 ,eventtime
                 ,direction
                 ,eventtype
@@ -397,8 +408,8 @@ def main():
                 ,schemaversion
                 ,usercode
             ) AS embedding_vector
-            ,{DIMENSIONS} AS embedding_dimensions
-            ,CURRENT_TIMESTAMP AS embedding_timestamp
+            ,{target_dimensions} AS embedding_dimensions
+            ,CURRENT_TIMESTAMP   AS embedding_timestamp
             ,created_at
         FROM c_cdcsource.demog.transactions
     """

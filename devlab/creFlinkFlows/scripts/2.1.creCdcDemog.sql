@@ -1,3 +1,4 @@
+-- scripts/2.1.creCdcDemog.sql
 -- Inbound from PostgreSQL via CDC Process
 -- Main demog inbound tables, will be used as Pyflink source
 -- see 1.1
@@ -35,7 +36,7 @@ CREATE OR REPLACE TABLE accountholders (
     ,'database-name'                       = 'demog'
     ,'schema-name'                         = 'public'
     ,'table-name'                          = 'accountholders'
-    ,'slot.name'                           = 'accountholders_pyFlink'
+    ,'slot.name'                           = 'accountholders_pyflink'           -- Can't include capital letters
     ,'scan.incremental.snapshot.enabled'   = 'true'               
     ,'scan.startup.mode'                   = 'initial'            
     ,'decoding.plugin.name'                = 'pgoutput'
@@ -93,7 +94,7 @@ CREATE OR REPLACE TABLE transactions (
     ,'database-name'                       = 'demog'
     ,'schema-name'                         = 'public'
     ,'table-name'                          = 'transactions'
-    ,'slot.name'                           = 'transactions_pyFlink'
+    ,'slot.name'                           = 'transactions_pyflink'
     ,'scan.incremental.snapshot.enabled'   = 'true'               
     ,'scan.startup.mode'                   = 'initial'            
     ,'decoding.plugin.name'                = 'pgoutput'
