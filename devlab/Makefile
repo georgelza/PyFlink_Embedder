@@ -36,6 +36,7 @@ build:
 .PHONY: build
 
 
+# S3/Minio based  => Default
 run:
 	@echo "🚀 Starting Flnk + JDBC based Catalog configuration (Flink, PostgreSQL & MinIO)..."
 	docker compose -f docker-compose.yml -p aiembed up -d \
@@ -45,6 +46,18 @@ run:
 		--remove-orphans
 	@echo "✅ Flink with JDBC based Catalog and supporting services started successfully"
 .PHONY: run
+
+
+# File System based
+run-fs:
+	@echo "🚀 Starting Flnk + JDBC based Catalog configuration (Flink, PostgreSQL)..."
+	docker compose -f docker-compose-fs.yml -p aiembed up -d \
+		jobmanager taskmanager \
+ 		postgrescat postgrescdc
+		--remove-orphans
+	@echo "✅ Flink with JDBC based Catalog and supporting services started successfully"
+.PHONY: run-fs
+
 
 stop:
 	docker compose stop
@@ -75,18 +88,39 @@ fsql:
 	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh
 
 
-cat:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/1.1.creCat.sql
+# S3/Minio based  => Default
+master:
+	@echo "-- Generated master.sql" > ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/1.1.creCat.sql >> ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/3.1.creTargetFinflow.sql >> ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/3.2.creTargetCmplx.sql >> ./creFlinkFlows/master.sql
+	@echo "✅ master.sql for S3 generated"
 
-finflow:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.1.creTargetFinflow.sql
+deploy: master
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master.sql
 
-cmplx:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/3.2.creTargetCmplx.sql
 
-# back to the scheduled programming
-ah:
-	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsAh.sql
+# File System based
+master-fs:
+	@echo "-- Generated master.sql" > ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/1.1.creCat-fs.sql >> ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/3.1.creTargetFinflow.sql >> ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/3.2.creTargetCmplx.sql >> ./creFlinkFlows/master.sql
+	@echo "✅ master.sql for FS generated"
+
+deploy-fs: master-fs
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master.sql
+
+
+# Single threaded/worker
+ah1:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsAhSingle.sql
+
+
+# 4 workers -> Problems
+ahm:
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/scripts/4.1.creInsertsAhMulti.sql
+
 
 #txn:
 # Placeholder

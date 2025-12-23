@@ -13,5 +13,5 @@ make jm
     -m jobmanager:8081 \
     -py /pyflink/udfs/txn_embed_udf.py \
     -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
-    -j /opt/flink/lib/flink-python-1.20.1.jar \
-    -j /opt/flink/lib/postgresql-42.7.6.jar 
+    -j /opt/flink/lib/postgresql-42.7.6.jar  \   
+    -j /opt/flink/lib/flink-python-1.20.1.jar

@@ -29,14 +29,23 @@ from pyflink.table.udf import udf
 from pyflink.table import DataTypes
 from sentence_transformers import SentenceTransformer
 import torch
-import sys
+import sys, time, logging
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Counter for progress tracking
+processed_count = 0
 
 # --------------------------------------------------------------------------
 # Constants
 # --------------------------------------------------------------------------
-MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
-
+#MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
+MODEL           = 'all-MiniLM-L6-v2'
 
 # --------------------------------------------------------------------------
 # Define UDF for embedding generation
@@ -63,10 +72,16 @@ def generate_ah_embedding(target_dimensions
         Returns:
             array of float: ....
     """
+    global processed_count
     
     try:
-    
-    
+        logger.info("Processing embedding...")
+        processed_count += 1
+        
+        # Log every 100 records
+        if processed_count % 100 == 0:
+            logger.info(f"Processed {processed_count} records so far...")
+        
         # Use a class variable to cache the model across invocations
         if not hasattr(generate_ah_embedding, 'model'):
             generate_ah_embedding.model = SentenceTransformer(MODEL)
@@ -101,18 +116,33 @@ def generate_ah_embedding(target_dimensions
         if not transaction_text.strip():
             transaction_text = "Unknown account holder profile"
         
+        # Defining it here so that we exclude the first slow run.
+        start_time = time.time()
+        
         # Generate embedding
-        with torch.no_grad():
+        with torch.no_grad():        
             embedding = generate_ah_embedding.model.encode(transaction_text, convert_to_numpy=True)
-            #print(embedding)
+            #logger.info(embedding)
+    
+        elapsed = time.time() - start_time
+        
+        if elapsed > 1.0:  # Log slow operations
+            logger.warning(f"Slow Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
+        
+        else:
+            logger.info(f"Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
 
+        # Convert to list of floats for Flink        
         final_size = int(target_dimensions)
-                                
-        # Convert to list of floats for Flink
         return embedding[:final_size].astype('float64').tolist()
     
+    # except Exception as e:
+    #     print(f"UDF Error: {str(e)}", file=sys.stderr)
+    #     raise e
+    
     except Exception as e:
-        print(f"UDF Error: {str(e)}", file=sys.stderr)
-        raise e
+        logger.error(f"UDF Error: processing record {processed_count}: {str(e)}", exc_info=True, file=sys.stderr)
+        # Return empty embedding on error instead of failing
+        return [0.0] * target_dimensions
 
 # end generate_ah_embedding

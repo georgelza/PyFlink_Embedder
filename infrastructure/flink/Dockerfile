@@ -1,4 +1,4 @@
-FROM arm64v8/flink:1.20.1-scala_2.12-java17
+FROM arm64v8/flink:1.20.2-scala_2.12-java17
 SHELL ["/bin/bash", "-c"]
 
 RUN echo "--> Install some useful tools (openjdk-17-jdk-headless required on ARM platforms to enable installation of apache-flink)" \
@@ -15,7 +15,7 @@ ENV FLINK_HOME=/opt/flink
 ENV HIVE_HOME=${FLINK_HOME}/conf/
 
 ENV FLINK_VERSION_SHORT=1.20
-ENV FLINK_VERSION_FULL=1.20.1
+ENV FLINK_VERSION_FULL=1.20.2
 ENV ICEBERG_VERSION=1.9.1
 ENV HADOOP_VERSION=3.3.4
 ENV POSTGRESQL_CONNECTOR=42.7.6
@@ -80,6 +80,7 @@ COPY stage/hadoop-common-${HADOOP_VERSION}.jar                                  
 COPY stage/hadoop-shaded-guava-1.1.1.jar                                        ${FLINK_HOME}/lib/hadoop-shaded-guava-1.1.1.jar
 COPY stage/hadoop-aws-${HADOOP_VERSION}.jar                                     ${FLINK_HOME}/lib/hadoop-aws-${HADOOP_VERSION}.jar 
 COPY stage/hadoop-hdfs-client-${HADOOP_VERSION}.jar                             ${FLINK_HOME}/lib/hadoop-hdfs-client-${HADOOP_VERSION}.jar
+COPY stage/hadoop-mapreduce-client-core-${HADOOP_VERSION}.jar                   ${FLINK_HOME}/lin/hadoop-mapreduce-client-core-${HADOOP_VERSION}.jar
 COPY stage/stax2-api-4.2.1.jar                                                  ${FLINK_HOME}/lib/stax2-api-4.2.1.jar
 COPY stage/woodstox-core-5.3.0.jar                                              ${FLINK_HOME}/lib/woodstox-core-5.3.0.jar 
 COPY stage/aws-java-sdk-bundle-1.12.262.jar                                     ${FLINK_HOME}/lib/aws-java-sdk-bundle-1.12.262.jar

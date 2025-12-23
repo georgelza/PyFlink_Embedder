@@ -53,7 +53,7 @@ jobmanager:
     port: 6123
   memory:
     process:
-      size: 2048m
+      size: 4096m
   execution:
     failover-strategy: region
     checkpointing:
@@ -108,21 +108,26 @@ jobmanager:
 
 # The number of task slots that each TaskManager offers. Each slot runs one parallel pipeline.
 
+# Various tweaks to handle the PyFlink Embedding job
+# Increase total process memory to at least 6GB in Docker, 
+# then allocate specifically for off-heap (Python)
 taskmanager:
   bind-host: 0.0.0.0
+  numberOfTaskSlots: 20
   memory:
-    flink:
-      size: 8192m
-    framework:
-      off-heap:
-        size: 256m
-    min: 64mb
-    network:
-      max: 256m
-  numberOfTaskSlots: 30
+    process:
+      size: 8gb         # This must be LESS than the Docker limit to leave room for the Python process
+    jvm-overhead:
+      max: 2gb          # Increase the Overhead Max to allow for the driver buffers
+    task:
+      off-heap:         # Explicitly set Task Off-Heap (Crucial for your Python UDF weights)
+        size: 2gb       # Specifically reserve memory for the UDF/Room for the ML model
+    managed:
+      fraction: 0.1     # Paimon doesn't need huge managed memory here
+      size: 2gb         # DO NOT set taskmanager.memory.flink.size manually (let Flink derive it)
+                        # Explicitly set Managed Memory (important for Paimon/RocksDB)
 
 # The parallelism used for programs that did not specify and other parallelism.
-
 parallelism:
   default: 2
 
@@ -177,7 +182,8 @@ parallelism:
 
 execution:
   checkpointing:
-    interval: 30s
+    interval: 60s
+    timeout: 5min
     dir: file:///opt/flink/checkpoints
     incremental:
       incremental: true
@@ -210,7 +216,6 @@ state:
   backend:
     type: rocksdb
     localdir: /opt/flink/rocksdb
-#    incremental: true
   checkpoints.dir: file:///opt/flink/checkpoints
 
 # The failover strategy, i.e., how the job computation recovers from task failures.

@@ -21,24 +21,38 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 - `<Project Root>/devlab/docker-compose.yml` which can be brought online by executing below, (this will use `.env`).
 
-- Execute `make run_flink` as defined in `devlab/Makefile` to run environment.
+- Execute `make run` as defined in `devlab/Makefile` to run environment.
+  
+- Deploy Catalog `make cat`
+
+- Deploy Finflow `make finflow`
+
+- Deploys accountHolder embedding flow
+  -  `make ah`
   
 - Execute `Shadowtraffic` to create Workload (#1 AccountHolders, #2 Financial Transactions) 
+
   - => Output to 2 PostgreSQL Tables located in postgrescdc Postgres based database/service.
-  - This is done by executing `<Project Root>/shadowtraffic/run_pg.sh`.
+
+  - This is done by executing `<Project Root>/shadowtraffic/run_pg1.sh`.
+
+  - If you want to increase the data generate rate execute `<Project Root>/shadowtraffic/run_pg2.sh`.
 
 - At this point you haev an incoming data stream into the PostgreSQL tables (`accountholders` and `transactions`).
 
-- Next you want to create the various Flink catalogs and tables, after which you can start the embedding processing.
-  
-- Execute `devlab/pyflink/ah_embed.cmd` to start Embedding job on Flink Cluster of #1 data set / Account Holders.
+- Deploy transactions embedding flow
 
-- Execute `devlab/pyflink/txn_embed.cmd` to start Embedding job on Flink Cluster of #2 data set / Financial Transactions.
+  - Execute `devlab/pyflink/txn_embed.cmd` to start Embedding job on Flink Cluster of #2 data set / Financial Transactions.
+
 
 - Next is moving the data into one or other direction.
+  
   - You can either move the data directly to a Iceberg or a Paimon based table.
+  
   - You can push the data to Apache Fluss tables, which you can configure with tiering which will then move/tier the data onto:
+  
     - Apache Iceberg or Apache Paimon.
+  
   - Not shown is the option to add a Apache Kafka/Confluent based Kafka cluster, allowing the user to push the data onto Kafka Topics from where you can utlize the Kafka Connect Framework to sink the data into one of many many persistent store.s
 
 
@@ -46,7 +60,7 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 The following stack is deployed using one of the provided  `<Project Root>/devlab/docker-compose-*.yaml` files as per above.
 
-- [Apache Flink 1.20.1](https://nightlies.apache.org/flink/flink-docs-release-1.20/)                   
+- [Apache Flink 1.20.2](https://nightlies.apache.org/flink/flink-docs-release-1.20/)                   
 
 - [Apache Flink CDC 3.5.0](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.5/)
 
@@ -117,7 +131,7 @@ nationalid                                              => Random 16 Digits uniq
 
 ### 2. Financial Transactions
 
-### Outbound Txn
+### Outbound Txn: From Payer to Payee
 
 ```bash
 
@@ -169,9 +183,9 @@ nationalid                                              => Random 16 Digits uniq
         embedding_dimensions
         embedding_timestamp
         created_at
-    ```
+  ```
 
-### Inbound Txn 
+### Inbound Txn: To Payee from Payer
 
 (separate insert/record into Transaction table)
 
@@ -180,7 +194,7 @@ nationalid                                              => Random 16 Digits uniq
     eventId                                             => UUIDv7   Unique, excluded from embedding calc
     transactionid                                       => UUIDv7   Shared with Inbound, excluded from embedding calc
         eventtime                                       => "2023-07-31T12:59:02"
-        direction: outbound
+        direction: inbound
         eventtype
         creationdate
         accountholdernationalid

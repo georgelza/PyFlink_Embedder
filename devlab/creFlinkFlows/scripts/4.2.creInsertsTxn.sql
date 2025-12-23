@@ -16,3 +16,12 @@ SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql';
 
 SET 'pipeline.name' = 'Emded & Persist into Paimon (finflow): transactions';
 
+
+# see pyflink/txn_embed.cmd
+
+/opt/flink/bin/flink run \
+    -m jobmanager:8081 \
+    -py /pyflink/udfs/txn_embed_udf.py \
+    -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
+    -j /opt/flink/lib/flink-python-1.20.1.jar \
+    -j /opt/flink/lib/postgresql-42.7.6.jar     

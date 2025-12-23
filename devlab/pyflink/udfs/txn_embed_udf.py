@@ -218,108 +218,153 @@ def main():
     # Register Postgres CDC Catalog
     # --------------------------------------------------------------------------
     print("Creating catalog c_cdcsource...")
-    table_env.execute_sql("CREATE CATALOG c_cdcsource WITH ('type'='generic_in_memory');")
-    
-    print("Creating database c_cdcsource.demog...")
-    table_env.execute_sql("CREATE DATABASE IF NOT EXISTS c_cdcsource.demog;")
+    try:
+        table_env.execute_sql("CREATE CATALOG c_cdcsource WITH ('type'='generic_in_memory');")
+        print("✓ Created database c_cdcsource.demog...")
 
-    # --------------------------------------------------------------------------
-    # Create the source table with LATEST-OFFSET startup mode
-    # --------------------------------------------------------------------------
-    print("Creating source table c_cdcsource.demog.transactions...")
-    source_table_creation_sql = """
-        CREATE TABLE c_cdcsource.demog.transactions (
-             _id                            BIGINT              NOT NULL
-            ,eventid                        VARCHAR(36)         NOT NULL
-            ,transactionid                  VARCHAR(36)         NOT NULL
-            ,eventtime                      VARCHAR(30)
-            ,direction                      VARCHAR(8)
-            ,eventtype                      VARCHAR(10)
-            ,creationdate                   VARCHAR(20)
-            ,accountholdernationalid        VARCHAR(16)
-            ,accountholderaccount           STRING
-            ,counterpartynationalid         VARCHAR(16)
-            ,counterpartyaccount            STRING
-            ,tenantid                       VARCHAR(8)
-            ,fromid                         VARCHAR(8)
-            ,accountagentid                 VARCHAR(8)
-            ,fromfibranchid                 VARCHAR(6)
-            ,accountnumber                  VARCHAR(16)
-            ,toid                           VARCHAR(8)
-            ,accountidcode                  VARCHAR(5)
-            ,counterpartyagentid            VARCHAR(8)
-            ,tofibranchid                   VARCHAR(6)
-            ,counterpartynumber             VARCHAR(16)
-            ,counterpartyidcode             VARCHAR(5)
-            ,amount                         STRING
-            ,msgtype                        VARCHAR(6)
-            ,settlementclearingsystemcode   VARCHAR(5)
-            ,paymentclearingsystemreference VARCHAR(12)
-            ,requestexecutiondate           VARCHAR(10)
-            ,settlementdate                 VARCHAR(10)
-            ,destinationcountry             VARCHAR(30)
-            ,localinstrument                VARCHAR(2)
-            ,msgstatus                      VARCHAR(12)
-            ,paymentmethod                  VARCHAR(4)
-            ,settlementmethod               VARCHAR(4)
-            ,transactiontype                VARCHAR(2)
-            ,verificationresult             VARCHAR(4)
-            ,numberoftransactions           INT
-            ,schemaversion                  INT
-            ,usercode                       VARCHAR(4)
-            ,created_at                     TIMESTAMP_LTZ(3)
-            ,WATERMARK                      FOR created_at AS created_at - INTERVAL '15' SECOND
-            ,PRIMARY KEY (_id) NOT ENFORCED
-        ) WITH (
-             'connector'                           = 'postgres-cdc'
-            ,'hostname'                            = 'postgrescdc'
-            ,'port'                                = '5432'
-            ,'username'                            = 'dbadmin'
-            ,'password'                            = 'dbpassword'
-            ,'database-name'                       = 'demog'
-            ,'schema-name'                         = 'public'
-            ,'table-name'                          = 'transactions'
-            ,'slot.name'                           = 'transactions_python_udf'
-            ,'scan.incremental.snapshot.enabled'   = 'true'
-            ,'scan.startup.mode'                   = 'initial'
-            ,'decoding.plugin.name'                = 'pgoutput'
-            ,'debezium.snapshot.mode'              = 'initial'
-        );
-    """
-    table_env.execute_sql(source_table_creation_sql)
-    print("✓ Source table created successfully.")
+    except Exception as e:
+        print(f"✗ Error Creating database c_cdcsource.demog")
+        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+        raise e
     
+    print("Creating database c_cdcsource.demogs...")
+    try:
+        table_env.execute_sql("CREATE DATABASE IF NOT EXISTS c_cdcsource.demog;")
+        print("✓ Created database c_cdcsource.demog...")
+
+    except Exception as e:
+        print(f"✗ Error Creating database c_cdcsource.demog")
+        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+        raise e
+    
+    print("Creating source table c_cdcsource.demog.transactions...")
+    try:
+        # --------------------------------------------------------------------------
+        # Create the source table with LATEST-OFFSET startup mode
+        # --------------------------------------------------------------------------
+        source_table_creation_sql = """
+            CREATE TABLE c_cdcsource.demog.transactions (
+                _id                            BIGINT              NOT NULL
+                ,eventid                        VARCHAR(36)         NOT NULL
+                ,transactionid                  VARCHAR(36)         NOT NULL
+                ,eventtime                      VARCHAR(30)
+                ,direction                      VARCHAR(8)
+                ,eventtype                      VARCHAR(10)
+                ,creationdate                   VARCHAR(20)
+                ,accountholdernationalid        VARCHAR(16)
+                ,accountholderaccount           STRING
+                ,counterpartynationalid         VARCHAR(16)
+                ,counterpartyaccount            STRING
+                ,tenantid                       VARCHAR(8)
+                ,fromid                         VARCHAR(8)
+                ,accountagentid                 VARCHAR(8)
+                ,fromfibranchid                 VARCHAR(6)
+                ,accountnumber                  VARCHAR(16)
+                ,toid                           VARCHAR(8)
+                ,accountidcode                  VARCHAR(5)
+                ,counterpartyagentid            VARCHAR(8)
+                ,tofibranchid                   VARCHAR(6)
+                ,counterpartynumber             VARCHAR(16)
+                ,counterpartyidcode             VARCHAR(5)
+                ,amount                         STRING
+                ,msgtype                        VARCHAR(6)
+                ,settlementclearingsystemcode   VARCHAR(5)
+                ,paymentclearingsystemreference VARCHAR(12)
+                ,requestexecutiondate           VARCHAR(10)
+                ,settlementdate                 VARCHAR(10)
+                ,destinationcountry             VARCHAR(30)
+                ,localinstrument                VARCHAR(2)
+                ,msgstatus                      VARCHAR(12)
+                ,paymentmethod                  VARCHAR(4)
+                ,settlementmethod               VARCHAR(4)
+                ,transactiontype                VARCHAR(2)
+                ,verificationresult             VARCHAR(4)
+                ,numberoftransactions           INT
+                ,schemaversion                  INT
+                ,usercode                       VARCHAR(4)
+                ,created_at                     TIMESTAMP_LTZ(3)
+                ,WATERMARK                      FOR created_at AS created_at - INTERVAL '15' SECOND
+                ,PRIMARY KEY (_id) NOT ENFORCED
+            ) WITH (
+                 'connector'                           = 'postgres-cdc'
+                ,'hostname'                            = 'postgrescdc'
+                ,'port'                                = '5432'
+                ,'username'                            = 'dbadmin'
+                ,'password'                            = 'dbpassword'
+                ,'database-name'                       = 'demog'
+                ,'schema-name'                         = 'public'
+                ,'table-name'                          = 'transactions'
+                ,'slot.name'                           = 'transactions_python_udf'
+                ,'scan.incremental.snapshot.enabled'   = 'true'
+                ,'scan.startup.mode'                   = 'initial'
+                ,'decoding.plugin.name'                = 'pgoutput'
+                ,'debezium.snapshot.mode'              = 'initial'
+                ,'scan.incremental.snapshot.chunk.size' = '8096'    -- Explicitly set chunk size
+                ,'scan.snapshot.fetch.size'             = '1024'    -- Add fetch size
+                ,'connect.timeout'                      = '30s'     -- Add connection timeout
+            );
+        """
+        
+        table_env.execute_sql(source_table_creation_sql)
+        print("✓ Created source table c_cdcsource.demog.transactions...")
+
+    except Exception as e:
+        print(f"✗ Error Creating source CDC Table")
+        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+        raise e
+    
+
     # --------------------------------------------------------------------------
     # Register Apache Paimon Catalog
     # --------------------------------------------------------------------------
-    print("Creating Paimon catalog c_paimon...")
-    table_env.execute_sql("""
-        CREATE CATALOG c_paimon WITH (
-            'type'                          = 'paimon'
-            ,'metastore'                    = 'jdbc'
-            ,'catalog-key'                  = 'jdbc'
-            ,'uri'                          = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
-            ,'jdbc.user'                    = 'dbadmin'
-            ,'jdbc.password'                = 'dbpassword'
-            ,'jdbc.driver'                  = 'org.postgresql.Driver'
-            ,'warehouse'                    = 's3://warehouse/paimon'
-            ,'s3.endpoint'                  = 'http://minio:9000'
-            ,'s3.path-style-access'         = 'true'
-            ,'table-default.file.format'    = 'parquet'
-        );
-    """)
-    
-    print("Creating database c_paimon.finflow...")
-    table_env.execute_sql("CREATE DATABASE IF NOT EXISTS c_paimon.finflow;")
-    print("✓ Paimon catalog and database ready.")
+    # try:
+    #     print("Creating Paimon catalog c_paimon...")
+    #     table_env.execute_sql("""
+    #         CREATE CATALOG c_paimon WITH (
+    #             'type'                          = 'paimon'
+    #             ,'metastore'                    = 'jdbc'
+    #             ,'catalog-key'                  = 'jdbc'
+    #             ,'uri'                          = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
+    #             ,'jdbc.user'                    = 'dbadmin'
+    #             ,'jdbc.password'                = 'dbpassword'
+    #             ,'jdbc.driver'                  = 'org.postgresql.Driver'
+    #             ,'warehouse'                    = 's3://warehouse/paimon'
+    #             ,'s3.endpoint'                  = 'http://minio:9000'
+    #             ,'s3.path-style-access'         = 'true'
+    #             ,'table-default.file.format'    = 'parquet'
+    #         );
+    #     """)
+    #     print("✓ Source Paimon Catalog created successfully.")
+        
+    # except Exception as e:
+    #     print(f"✗ Error Creating Paimon Catalog")
+    #     print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+    #     raise e
+
+    # print("Creating database c_paimon.finflow database...")
+    # try:
+    #     table_env.execute_sql("CREATE DATABASE IF NOT EXISTS c_paimon.finflow;")
+    #     print("✓ Paimon catalog and database ready.")
+
+    # except Exception as e:
+    #     print(f"✗ Error Creating source Paimon.finflow Database")
+    #     print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+    #     raise e
+
 
     # --------------------------------------------------------------------------
     # Register the UDF
     # --------------------------------------------------------------------------    
     print("Registering UDF generate_txn_embedding...")
-    table_env.create_temporary_system_function("generate_txn_embedding", generate_txn_embedding)
-    print("✓ UDF registered successfully.")
+    try:
+        table_env.create_system_function("generate_txn_embedding", generate_txn_embedding)
+        print("✓ UDF generate_txn_embedding registered successfully.")
 
+    except Exception as e:
+        print(f"✗ Error Registering UDF generate_txn_embedding function")
+        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+        raise e
+    
     # --------------------------------------------------------------------------
     # Create statement set and add INSERT query
     # --------------------------------------------------------------------------
@@ -411,7 +456,15 @@ def main():
         FROM c_cdcsource.demog.transactions
     """
 
-    statement_set.add_insert_sql(embedding_insert_query)
+    try:
+        statement_set.add_insert_sql(embedding_insert_query)
+        print("✓ Prepared embedding insert query...")
+
+    except Exception as e:
+        print(f"✗ Error Preparing embedding insert query")
+        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+        raise e    
+    
     
     # --------------------------------------------------------------------------
     # Execute the job in detached mode
@@ -423,34 +476,38 @@ def main():
     try:
         # Execute returns immediately in detached mode
         table_result = statement_set.execute()
-        
-        # Try to get job client info if available
-        try:
-            job_client = table_result.get_job_client()
-            if job_client:
-                job_id = job_client.get_job_id()
-                print(f"✓ Job submitted successfully!")
-                print(f"✓ Job ID: {job_id}")
-            else:
-                print(f"✓ Job submitted successfully (detached mode)!")
-        except:
-            print(f"✓ Job submitted successfully (detached mode)!")
-        
-        print(f"✓ Pipeline: {pipeline_name}")
-        print(f"✓ Check job status: http://localhost:8084")
-        print(f"✓ The job will process CDC events continuously")
-        print("="*80)
-        
+        print("✓ Submitted job to Flink cluster...")
+
     except Exception as e:
         print(f"✗ Error during job submission: {e}")
         import traceback
         traceback.print_exc()
-        raise
+        raise    
     
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-    print(f"\nScript completed - {now}")
-    print("Job is now running in the cluster. This script will exit.")
-    print("="*80)
+    # Try to get job client info if available
+    try:
+        job_client = table_result.get_job_client()
+        
+        if job_client:
+            job_id = job_client.get_job_id()
+            print(f"✓ Job submitted successfully!")
+            print(f"✓ Job ID: {job_id}")
+            
+            print(f"✓ Pipeline: {pipeline_name}")
+            print(f"✓ Check job status: http://localhost:8084")
+            print(f"✓ The job will process CDC events continuously")
+            print("="*80)                
+    
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
+            
+            print(f"\nScript completed - {now}")
+            print("Job is now running in the cluster. This script will exit.")
+            print("="*80)
+            
+    except Exception as e:
+        print(f"✗ Job submit Failed to successfully (in detached mode)!")
+        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
+        raise e    
 
 #end main
 
