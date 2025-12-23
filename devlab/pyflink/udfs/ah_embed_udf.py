@@ -44,8 +44,8 @@ processed_count = 0
 # --------------------------------------------------------------------------
 # Constants
 # --------------------------------------------------------------------------
-#MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
-MODEL           = 'all-MiniLM-L6-v2'
+# https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
 
 # --------------------------------------------------------------------------
 # Define UDF for embedding generation
