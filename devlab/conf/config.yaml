@@ -116,7 +116,7 @@ taskmanager:
   numberOfTaskSlots: 10
   memory:
     process:
-      size: 8gb         # This must be LESS than the Docker limit to leave room for the Python process
+      size: 10gb         # This must be LESS than the Docker limit to leave room for the Python process
     jvm-overhead:
       max: 2gb          # Increase the Overhead Max to allow for the driver buffers
     framework:
