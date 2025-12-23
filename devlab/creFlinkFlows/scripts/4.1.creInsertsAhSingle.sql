@@ -55,11 +55,10 @@ SET 'parallelism.default'               = '1';
 
 -- Reduce Bundle Size: Making the bundles smaller allows the "checkpoint barrier" to pass through the UDF more frequently.
 SET 'python.fn-execution.bundle.size'   = '50';
--- 10 seconds
+--   10 seconds
 SET 'python.fn-execution.bundle.time'   = '10000';
 -- 120seconds / 2min
 SET 'execution.checkpointing.interval'  = '120s'; 
-
 
 -- Disable Upsert Materializer: As seen in your previous error, this is mandatory for Paimon.
 SET 'table.exec.sink.upsert-materialize' = 'NONE';
