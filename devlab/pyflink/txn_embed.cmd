@@ -1,7 +1,6 @@
  
-# in `devlab` directory execute:
-
-make jm
+# in devlab directory execute:
+# make jm
 
 # now copy and paste the below into the prompt of the jobmanager.
 

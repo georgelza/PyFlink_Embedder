@@ -5,17 +5,16 @@ SET 'python.executable' = '/usr/bin/python3';
 SET 'python.client.executable' = '/usr/bin/python3';
 
 -- Create catalogs
-SOURCE '/creFlinkFlows/scripts/1.1.creCat.sql';
+'/creFlinkFlows/scripts/1.1.creCat.sql';
 
 -- Create tables
-SOURCE '/creFlinkFlows/scripts/2.1.creCdcDemog.sql';
-SOURCE '/creFlinkFlows/scripts/3.1.creTargetDemog.sql';
-SOURCE '/creFlinkFlows/scripts/3.2.creCmplxTarget.sql';
+'/creFlinkFlows/scripts/2.1.creCdcDemog.sql';
+'/creFlinkFlows/scripts/3.1.creTargetDemog.sql';
+'/creFlinkFlows/scripts/3.2.creCmplxTarget.sql';
 
 -- Register UDFs
-SOURCE '/pyflink/scripts/register_ah_embed_udfs.sql';
--- SOURCE '/pyflink/scripts/register_txn_embed_udfs.sql';
+'/pyflink/scripts/register_ah_embed_udfs.sql';
 
--- Use UDFs in queries
--- SOURCE '/pyflink/scripts/????.sql';
+'/pyflink/scripts/register_txn_embed_udfs.sql';
+
 
