@@ -119,7 +119,7 @@ taskmanager:
       size: 8gb         # This must be LESS than the Docker limit to leave room for the Python process
     jvm-overhead:
       max: 2gb          # Increase the Overhead Max to allow for the driver buffers
-    task:
+    framework:
       off-heap:         # Explicitly set Task Off-Heap (Crucial for your Python UDF weights)
         size: 2gb       # Specifically reserve memory for the UDF/Room for the ML model
     managed:
