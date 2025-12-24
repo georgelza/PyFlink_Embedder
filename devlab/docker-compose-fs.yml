@@ -22,7 +22,7 @@ services:
   # Lots of Jar's added to the base image, Fluss, JDBC, PostgreSQL, Paimon, S3
   ################################################################################
   jobmanager:
-    image: ${REPO_NAME}/apacheflink-base-1.20.2-scala_2.12-java17:1.0.0
+    image: ${REPO_NAME}/apacheflink-base-1.20.2-scala_2.12-java17:1.0.1
     hostname: jobmanager
     container_name: jobmanager
     ports:
@@ -39,7 +39,7 @@ services:
       - ./creFlinkFlows:/creFlinkFlows
       - ./pyflink:/pyflink
 
-      - ./data/flink/paimon/data:/data
+      - ./data/flink/paimon:/data
       
       - ./data/flink/logs:/opt/flink/log
       - ./data/flink/checkpoints:/opt/flink/checkpoints
@@ -56,7 +56,7 @@ services:
     command: jobmanager
 
   taskmanager:
-    image: ${REPO_NAME}/apacheflink-base-1.20.2-scala_2.12-java17:1.0.0
+    image: ${REPO_NAME}/apacheflink-base-1.20.2-scala_2.12-java17:1.0.1
     depends_on:
       - jobmanager
     deploy:
@@ -77,7 +77,7 @@ services:
       - ./creFlinkFlows:/creFlinkFlows
       - ./pyflink:/pyflink
 
-      - ./data/flink/paimon/data:/data
+      - ./data/flink/paimon:/data
       
       - ./data/flink/logs:/opt/flink/log
       - ./data/flink/checkpoints:/opt/flink/checkpoints

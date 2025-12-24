@@ -75,7 +75,6 @@ def generate_ah_embedding(target_dimensions
     global processed_count
     
     try:
-        logger.info("Processing embedding...")
         processed_count += 1
         
         # Log every 100 records
@@ -121,8 +120,11 @@ def generate_ah_embedding(target_dimensions
         
         # Generate embedding
         with torch.no_grad():        
-            embedding = generate_ah_embedding.model.encode(transaction_text, convert_to_numpy=True)
-            #logger.info(embedding)
+            embedding = generate_ah_embedding.model.encode(
+                transaction_text, 
+                convert_to_numpy=True,
+                show_progress_bar=False
+            )
     
         elapsed = time.time() - start_time
         
@@ -135,10 +137,7 @@ def generate_ah_embedding(target_dimensions
         # Convert to list of floats for Flink        
         final_size = int(target_dimensions)
         return embedding[:final_size].astype('float64').tolist()
-    
-    # except Exception as e:
-    #     print(f"UDF Error: {str(e)}", file=sys.stderr)
-    #     raise e
+
     
     except Exception as e:
         logger.error(f"UDF Error: processing record {processed_count}: {str(e)}", exc_info=True, file=sys.stderr)
