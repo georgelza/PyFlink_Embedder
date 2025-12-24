@@ -53,7 +53,7 @@ run-fs:
 	@echo "🚀 Starting Flnk + JDBC based Catalog configuration (Flink, PostgreSQL)..."
 	docker compose -f docker-compose-fs.yml -p aiembed up -d \
 		jobmanager taskmanager \
- 		postgrescat postgrescdc
+ 		postgrescat postgrescdc \
 		--remove-orphans
 	@echo "✅ Flink with JDBC based Catalog and supporting services started successfully"
 .PHONY: run-fs

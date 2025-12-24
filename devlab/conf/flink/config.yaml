@@ -113,7 +113,7 @@ jobmanager:
 # then allocate specifically for off-heap (Python)
 taskmanager:
   bind-host: 0.0.0.0
-  numberOfTaskSlots: 10
+  numberOfTaskSlots: 6
   memory:
     process:
       size: 10gb        # This must be LESS than the Docker limit to leave room for the Python process

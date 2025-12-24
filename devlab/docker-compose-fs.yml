@@ -1,19 +1,19 @@
 
 configs:
   flink-conf:
-    file: ./conf/config.yaml
+    file: ./conf/flink/config.yaml
 
   log4j:
-    file: ./conf/log4j.properties
+    file: ./conf/log4j/log4j.properties
   log4j-console:
-    file: ./conf/log4j-console.properties
+    file: ./conf/log4j/log4j-console.properties
   log4j-session:
-    file: ./conf/log4j-session.properties
+    file: ./conf/log4j/log4j-session.properties
 
   postgres_conf:
-    file: conf/postgresql.conf
+    file: conf/pg/postgresql.conf
   postgres_hba:
-    file: conf/pg_hba.conf
+    file: conf/pg/pg_hba.conf
 
 services:
   ################################################################################
@@ -40,7 +40,7 @@ services:
       - ./pyflink:/pyflink
 
       - ./data/flink/paimon/data:/data
-
+      
       - ./data/flink/logs:/opt/flink/log
       - ./data/flink/checkpoints:/opt/flink/checkpoints
       - ./data/flink/rocksdb:/opt/flink/rocksdb
@@ -75,9 +75,9 @@ services:
     volumes:
       - ./creFlinkFlows:/creFlinkFlows
       - ./pyflink:/pyflink
-      
-      - ./data/flink/paimon/data:/data
 
+      - ./data/flink/paimon/data:/data
+      
       - ./data/flink/logs:/opt/flink/log
       - ./data/flink/checkpoints:/opt/flink/checkpoints
       - ./data/flink/rocksdb:/opt/flink/rocksdb

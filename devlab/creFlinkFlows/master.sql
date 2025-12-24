@@ -2,7 +2,7 @@
 
 -- Thinking is we will consume from PostgreSQL sources, then use a PyFlink to flatten the structure, outputting to a Fluss table.
 -- then reading new Fluss table, calculate embeddings, output to another Fluss table/s. 
--- This in turn will be configured with Lakehouse tiering into Paimon table on MinIO S3
+-- This in turn will be configured with Lakehouse tiering into Paimon table on local FS into /data directory 
 
 -- Catalog c_cdcsource moved to 2.1.creCdc.sql
 -- This is due t this being an generic in memory catalog and is required to be re-created in every session together with the 
@@ -31,9 +31,7 @@ CREATE CATALOG c_paimon WITH (
     ,'jdbc.user'                     = 'dbadmin'
     ,'jdbc.password'                 = 'dbpassword'
     ,'jdbc.driver'                   = 'org.postgresql.Driver'
-    ,'warehouse'                     = 's3://warehouse/paimon'      
-    ,'s3.endpoint'                   = 'http://minio:9000'        
-    ,'s3.path-style-access'          = 'true'                     
+    ,'warehouse'                     = 'file:///data'
     ,'table-default.file.format'     = 'parquet'
 );
 
