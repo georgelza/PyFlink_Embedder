@@ -116,13 +116,13 @@ taskmanager:
   numberOfTaskSlots: 6
   memory:
     process:
-      size: 10gb        # This must be LESS than the Docker limit to leave room for the Python process
+      size: 12gb        # This must be LESS than the Docker limit to leave room for the Python process
     jvm-overhead:
       min: 512mb        # Increase the Overhead Max to allow for the driver buffers
       max: 2gb          # Fix the Overhead limit to allow Flink's math to succeed
     task:
       off-heap:         # Explicitly set Task Off-Heap (Crucial for your Python UDF weights)
-        size: 2gb       # Specifically reserve memory for the UDF/Room for the ML model
+        size: 4gb       # Specifically reserve memory for the UDF/Room for the ML model
     managed:
       fraction: 0.1     # Paimon doesn't need huge managed memory here
       size: 2gb         # DO NOT set taskmanager.memory.flink.size manually (let Flink derive it)
@@ -130,6 +130,9 @@ taskmanager:
     network:            # Stabilize Networking
       min: 256mb
       max: 512mb
+
+heartbeat:
+  timeout: 180000
 
 # The parallelism used for programs that did not specify and other parallelism.
 parallelism:

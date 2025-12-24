@@ -21,6 +21,7 @@ ENV HADOOP_VERSION=3.3.4
 ENV POSTGRESQL_CONNECTOR=42.7.6
 ENV FLINK_CDC=3.5.0
 ENV PAIMON_VERSION=1.3.1
+ENV HADOOP_CLASSPATH=/opt/flink/lib/*
 
 WORKDIR ${FLINK_HOME}
 
@@ -75,22 +76,22 @@ RUN echo "-> Install JARs: General Hadoop" && \
     mkdir -p ./lib/hadoop 
 COPY stage/commons-configuration2-2.1.1.jar                                     ${FLINK_HOME}/lib/commons-configuration2-2.1.1.jar
 COPY stage/commons-logging-1.1.3.jar                                            ${FLINK_HOME}/lib/commons-logging-1.1.3.jar 
-COPY stage/hadoop-auth-${HADOOP_VERSION}.jar                                    ${FLINK_HOME}/lib/hadoop-auth-${HADOOP_VERSION}.jar
-COPY stage/hadoop-common-${HADOOP_VERSION}.jar                                  ${FLINK_HOME}/lib/hadoop-common-${HADOOP_VERSION}.jar
+COPY stage/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar                            ${FLINK_HOME}/lib/flink-shaded-hadoop-2-uber-2.8.3-10.0.jar
 COPY stage/hadoop-shaded-guava-1.1.1.jar                                        ${FLINK_HOME}/lib/hadoop-shaded-guava-1.1.1.jar
-COPY stage/hadoop-aws-${HADOOP_VERSION}.jar                                     ${FLINK_HOME}/lib/hadoop-aws-${HADOOP_VERSION}.jar 
-COPY stage/hadoop-hdfs-client-${HADOOP_VERSION}.jar                             ${FLINK_HOME}/lib/hadoop-hdfs-client-${HADOOP_VERSION}.jar
-COPY stage/hadoop-mapreduce-client-core-${HADOOP_VERSION}.jar                   ${FLINK_HOME}/lin/hadoop-mapreduce-client-core-${HADOOP_VERSION}.jar
 COPY stage/stax2-api-4.2.1.jar                                                  ${FLINK_HOME}/lib/stax2-api-4.2.1.jar
 COPY stage/woodstox-core-5.3.0.jar                                              ${FLINK_HOME}/lib/woodstox-core-5.3.0.jar 
 COPY stage/aws-java-sdk-bundle-1.12.262.jar                                     ${FLINK_HOME}/lib/aws-java-sdk-bundle-1.12.262.jar
 
-
 RUN echo "--> Install JARs: => Paimon" && \
-    mkdir -p ./lib/paimon
+    mkdir -p ./lib/paimon 
 COPY stage/paimon-flink-${FLINK_VERSION_SHORT}-${PAIMON_VERSION}.jar            ${FLINK_HOME}/lib/paimon/paimon-flink-${FLINK_VERSION_SHORT}-${PAIMON_VERSION}.jar
 COPY stage/paimon-s3-${PAIMON_VERSION}.jar                                      ${FLINK_HOME}/lib/paimon/paimon-s3-${PAIMON_VERSION}.jar
 
+#commented out as we providing the uber jar
+#COPY stage/hadoop-auth-${HADOOP_VERSION}.jar                                    ${FLINK_HOME}/lib/hadoop-auth-${HADOOP_VERSION}.jar
+#COPY stage/hadoop-common-${HADOOP_VERSION}.jar                                  ${FLINK_HOME}/lib/hadoop-common-${HADOOP_VERSION}.jar
+#COPY stage/hadoop-aws-${HADOOP_VERSION}.jar                                     ${FLINK_HOME}/lib/hadoop-aws-${HADOOP_VERSION}.jar 
+#COPY stage/hadoop-hdfs-client-${HADOOP_VERSION}.jar                             ${FLINK_HOME}/lib/hadoop-hdfs-client-${HADOOP_VERSION}.jar
 
 # ADD THIS NEW SECTION HERE
 ### TRYING EVERYTHING TO GET IT WORKING...

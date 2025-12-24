@@ -63,9 +63,9 @@ services:
       replicas: 1
       resources:
           limits:
-            memory: 10G  # Ensure this is higher than taskmanager.memory.process.size
+            memory: 12G  # Ensure this is higher than taskmanager.memory.process.size
     environment:
-      - ENV_ROOTLOG_LEVEL=DEBUG
+      - ENV_ROOTLOG_LEVEL=INFO
       - ENV_FLINKLOG_LEVEL=INFO
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
