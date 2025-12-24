@@ -9,6 +9,7 @@
                 "country":          {"_gen": "env", "var": "COUNTRY"},
                 "numBankAccounts":  {"_gen": "constant", "x": {"_gen": "env", "var": "NUM_ACCOUNTS"},  "cast": "integer"},
                 "numCredCards":     {"_gen": "constant", "x": {"_gen": "env", "var": "NUM_CREDCARDS"}, "cast": "integer"},
+                "sleep":            {"_gen": "constant", "x": {"_gen": "env", "var": "SLEEP"}, "cast": "integer"},
 
                 "dob_oldest": {
                     "_gen": "math",
@@ -201,7 +202,7 @@
                         6
                     ]
                 },
-                "throttleMs": 350
+                "throttleMs": {"_gen": "var", "var": "sleep"}
             }
         },
 
@@ -210,7 +211,8 @@
             "table": "transactions",
             "vars": {
 
-                "now":   {"_gen": "now"},
+                "now":      {"_gen": "now"},
+                "sleep":    {"_gen": "constant", "x": {"_gen": "env", "var": "SLEEP"}, "cast": "integer"},
 
                 // Lets get two random parties to dance.
                 "payer": {
@@ -539,7 +541,7 @@
             },
             "localConfigs": {
                 "maxEvents": 1,
-                "throttleMs": 350
+                "throttleMs": {"_gen": "var", "var": "sleep"}
             }
         },
         {
@@ -551,8 +553,8 @@
                     "table": "transactions",
                     "path": ["row"],
                     "strategy": "last"
-                }
-
+                },
+                "sleep":    {"_gen": "constant", "x": {"_gen": "env", "var": "SLEEP"}, "cast": "integer"}
             },
             "row": {
                 // Inbound Event
@@ -781,7 +783,7 @@
             },
             "localConfigs": {
                 "maxEvents": 1,
-                "throttleMs": 350
+                "throttleMs": {"_gen": "var", "var": "sleep"}
             }
         }
     ],
