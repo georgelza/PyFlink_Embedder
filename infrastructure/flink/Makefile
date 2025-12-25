@@ -34,7 +34,7 @@ build:
 	@echo "✅ Apache Flink Docker image built ${IMAGE_NAME}:${VERSION} successfully"
 
 
-pull: paimon iceberg misc
+pull: flink paimon misc
 	cd stage; wget https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-postgres-cdc/3.5.0/flink-sql-connector-postgres-cdc-3.5.0.jar 
 
 flink:

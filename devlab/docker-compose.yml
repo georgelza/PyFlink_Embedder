@@ -207,10 +207,13 @@ services:
       mc rm -r --force ${MINIO_ALIAS}/${MINIO_BUCKET};  
 
       mc mb ${MINIO_ALIAS}/${MINIO_BUCKET}/paimon --ignore-existing;
+      mc mb ${MINIO_ALIAS}/${MINIO_BUCKET}/iceberg --ignore-existing;
 
       mc policy set public ${MINIO_ALIAS}/${MINIO_BUCKET}/paimon;
+      mc policy set public ${MINIO_ALIAS}/${MINIO_BUCKET}/iceberg;
 
       mc anonymous set public ${MINIO_ALIAS}/${MINIO_BUCKET}/paimon;
+      mc anonymous set public ${MINIO_ALIAS}/${MINIO_BUCKET}/iceberg;
 
       mc ls ${MINIO_ALIAS};
 

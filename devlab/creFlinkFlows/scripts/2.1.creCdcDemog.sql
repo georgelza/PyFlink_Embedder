@@ -95,5 +95,3 @@ CREATE OR REPLACE TABLE transactions (
     ,'scan.startup.mode'                   = 'initial'            
     ,'decoding.plugin.name'                = 'pgoutput'
 );
-
--- See 3.1, 3.2

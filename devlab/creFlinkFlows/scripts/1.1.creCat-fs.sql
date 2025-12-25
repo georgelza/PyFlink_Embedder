@@ -30,21 +30,16 @@ CREATE CATALOG c_paimon WITH (
     ,'jdbc.user'                     = 'dbadmin'
     ,'jdbc.password'                 = 'dbpassword'
     ,'jdbc.driver'                   = 'org.postgresql.Driver'
-    ,'warehouse'                     = 'file:///data'
+    ,'warehouse'                     = 'file:///paimon'
     ,'table-default.file.format'     = 'parquet'
 );
 
 USE CATALOG c_paimon;
 
 -- Output from PyFlink routine, embedded tables
-CREATE DATABASE IF NOT EXISTS c_paimon.finflow;
-
--- Output from CTAS - Flat structured, source from c_paimon.finflow, potentially to a different destination
-CREATE DATABASE IF NOT EXISTS c_paimon.ctas;            
-
--- Transformed into complex JSON Structure, sourced from c_paimon.finflow
-CREATE DATABASE IF NOT EXISTS c_paimon.cmplx;            
+CREATE DATABASE IF NOT EXISTS c_paimon.finflow;       
 
 SHOW DATABASES;
+
 
 -- next execute 2.1

@@ -1,35 +1,36 @@
 #######################################################################################################################
 #
-#   Project             :   Transaction... Streaming transaction embedding vectorizer 
+#
+#   Project             :   Transactions... Streaming Transactions embedding vectorizer 
 #   File                :   txn_embed_udf.py
 #   Created             :   8 Dec 2025
+#
 #   Description         :   Calculate vector values for record arriving in source table, outputting the columns + vector 
 #                       :   to a new target table
+#                       :
+#   Misc Reading        :   https://www.kdnuggets.com/2025/05/confluent/a-data-scientists-guide-to-data-streaming
+#                       :   https://www.youtube.com/watch?v=Tn4n9xKE1ug
+#                       :   https://www.decodable.co/blog/a-hands-on-introduction-to-pyflink
 #
-#   Usage in Jobmanager:
-#   /opt/flink/bin/flink run \
-#        -d \
-#        -m jobmanager:8081 \
-#        -py /pyflink/udfs/txn_embed_udf.py \
-#        -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
-#        -j /opt/flink/lib/flink-python-1.20.1.jar
+#
+#
 #
 ########################################################################################################################
 __author__      = "George Leonard"
 __email__       = "georgelza@gmail.com"
-__version__     = "1.0.1"
-__copyright__   = "Copyright 2025 - G Leonard"
+__version__     = "1.0.0"
+__copyright__   = "Copyright 2025, - G Leonard"
 
-from pyflink.datastream import StreamExecutionEnvironment
-from pyflink.table import EnvironmentSettings, TableEnvironment
-from pyflink.table import StreamTableEnvironment, EnvironmentSettings
+"""
+Standalone Python UDF for generating transaction embeddings
+Can be registered in Flink SQL using CREATE TEMPORARY FUNCTION
+"""
+
 from pyflink.table.udf import udf
 from pyflink.table import DataTypes
-from pyflink.common import Configuration
 from sentence_transformers import SentenceTransformer
-from datetime import datetime
 import torch
-import sys, time, logging
+import time, logging
 
 # Configure logging
 logging.basicConfig(
@@ -45,15 +46,13 @@ processed_count = 0
 # Constants
 # --------------------------------------------------------------------------
 # https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
-DIMENSIONS      = 384
-MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
-
+MODEL      = 'sentence-transformers/all-MiniLM-L6-v2'
 
 # --------------------------------------------------------------------------
 # Define UDF for embedding generation
 # --------------------------------------------------------------------------
 @udf(result_type=DataTypes.ARRAY(DataTypes.DOUBLE()))
-def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, creationdate,
+def generate_txn_embedding(target_dimensions, transactionid, eventtime, direction, eventtype, creationdate,
                            accountholdernationalid, accountholderaccount,
                            counterpartynationalid, counterpartyaccount,
                            tenantid, fromid, accountagentid, fromfibranchid,
@@ -74,15 +73,16 @@ def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, c
             transaction details,
             
         Returns:
-            array of float: ....
+            array of DOUBLE: ....
     """
+    global processed_count
     
     try:
         processed_count += 1
 
         # Log every 100 records
         if processed_count % 100 == 0:
-            logger.info(f"Processed {processed_count} records so far...")
+            logger.info(f"Processed Txn {processed_count} records so far...")
                 
         # Use a class variable to cache the model across invocations
         if not hasattr(generate_txn_embedding, 'model'):
@@ -92,6 +92,8 @@ def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, c
         # Build a structured text representation of the transaction
         transaction_parts = []
         
+        if transactionid:
+            transaction_parts.append(f"Txn time: {transactionid}")
         if eventtime:
             transaction_parts.append(f"Event time: {eventtime}")
         if direction:
@@ -184,10 +186,10 @@ def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, c
         elapsed = time.time() - start_time
         
         if elapsed > 1.0:  # Log slow operations
-            logger.warning(f"Slow Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
+            logger.warning(f"Slow Txn Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
         
         else:
-            logger.info(f"Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
+            logger.info(f"Embedding Txn generation rt: {elapsed:.2f}s for record {processed_count}")
 
         # Convert to list of floats for Flink        
         final_size = int(target_dimensions)
@@ -195,374 +197,8 @@ def generate_txn_embedding(target_dimensions, eventtime, direction, eventtype, c
 
     
     except Exception as e:
-        logger.error(f"UDF Error: processing record {processed_count}: {str(e)}", exc_info=True, file=sys.stderr)
+        logger.error(f"UDF Error: Txn processing record {processed_count}: {str(e)}", exc_info=True)
         # Return empty embedding on error instead of failing
         return [0.0] * target_dimensions
 
-# end generate_embedding
-
-
-def main():
-    """
-    Main function to set up and execute the Flink streaming job for transaction embedding generation.
-    """
-    pipeline_name   = "Flink_txn_embedding"
-    now             = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    print(f"Starting {pipeline_name} - {now}")
-
-    target_dimensions = DIMENSIONS
-    
-    # --------------------------------------------------------------------------
-    # Environment settings
-    # --------------------------------------------------------------------------
-    config = Configuration()
-    config.set_string("table.exec.source.idle-timeout", "1s")
-    config.set_string("pipeline.name", pipeline_name)
-    
-    # CRITICAL: Set execution mode to not wait for job completion
-    config.set_string("execution.attached", "false")
-    config.set_string("execution.shutdown-on-attached-exit", "false")
-
-    # Initialize PyFlink environment
-    env = StreamExecutionEnvironment.get_execution_environment()
-    env.set_parallelism(1)
-    
-    env_settings = EnvironmentSettings \
-        .new_instance() \
-        .in_streaming_mode() \
-        .with_configuration(config) \
-        .build()
-
-    table_env = StreamTableEnvironment.create(env, environment_settings=env_settings)
-
-    # --------------------------------------------------------------------------
-    # Add JAR dependencies
-    # --------------------------------------------------------------------------
-    postgres_cdc_jar  = "file:///opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar" 
-    flink_python_jar  = "file:///opt/flink/lib/flink-python-1.20.2.jar"
-    postgres_jdbc_jar = "file:///opt/flink/lib/postgresql-42.7.6.jar"
-    
-    table_env.get_config().set("pipeline.jars", f"{postgres_cdc_jar};{flink_python_jar};{postgres_jdbc_jar}")
-
-    # --------------------------------------------------------------------------
-    # Register Postgres CDC Catalog
-    # --------------------------------------------------------------------------
-    print("Creating catalog c_cdcsource...")
-    try:
-        table_env.execute_sql("CREATE CATALOG c_cdcsource WITH ('type'='generic_in_memory');")
-        print("✓ Created database c_cdcsource.demog...")
-
-    except Exception as e:
-        print(f"✗ Error Creating database c_cdcsource.demog")
-        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-        raise e
-    
-    print("Creating database c_cdcsource.demogs...")
-    try:
-        table_env.execute_sql("CREATE DATABASE IF NOT EXISTS c_cdcsource.demog;")
-        print("✓ Created database c_cdcsource.demog...")
-
-    except Exception as e:
-        print(f"✗ Error Creating database c_cdcsource.demog")
-        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-        raise e
-    
-    print("Creating source table c_cdcsource.demog.transactions...")
-    try:
-        # --------------------------------------------------------------------------
-        # Create the source table with LATEST-OFFSET startup mode
-        # --------------------------------------------------------------------------
-        source_table_creation_sql = """
-            CREATE TABLE c_cdcsource.demog.transactions (
-                _id                            BIGINT              NOT NULL
-                ,eventid                        VARCHAR(36)         NOT NULL
-                ,transactionid                  VARCHAR(36)         NOT NULL
-                ,eventtime                      VARCHAR(30)
-                ,direction                      VARCHAR(8)
-                ,eventtype                      VARCHAR(10)
-                ,creationdate                   VARCHAR(20)
-                ,accountholdernationalid        VARCHAR(16)
-                ,accountholderaccount           STRING
-                ,counterpartynationalid         VARCHAR(16)
-                ,counterpartyaccount            STRING
-                ,tenantid                       VARCHAR(8)
-                ,fromid                         VARCHAR(8)
-                ,accountagentid                 VARCHAR(8)
-                ,fromfibranchid                 VARCHAR(6)
-                ,accountnumber                  VARCHAR(16)
-                ,toid                           VARCHAR(8)
-                ,accountidcode                  VARCHAR(5)
-                ,counterpartyagentid            VARCHAR(8)
-                ,tofibranchid                   VARCHAR(6)
-                ,counterpartynumber             VARCHAR(16)
-                ,counterpartyidcode             VARCHAR(5)
-                ,amount                         STRING
-                ,msgtype                        VARCHAR(6)
-                ,settlementclearingsystemcode   VARCHAR(5)
-                ,paymentclearingsystemreference VARCHAR(12)
-                ,requestexecutiondate           VARCHAR(10)
-                ,settlementdate                 VARCHAR(10)
-                ,destinationcountry             VARCHAR(30)
-                ,localinstrument                VARCHAR(2)
-                ,msgstatus                      VARCHAR(12)
-                ,paymentmethod                  VARCHAR(4)
-                ,settlementmethod               VARCHAR(4)
-                ,transactiontype                VARCHAR(2)
-                ,verificationresult             VARCHAR(4)
-                ,numberoftransactions           INT
-                ,schemaversion                  INT
-                ,usercode                       VARCHAR(4)
-                ,created_at                     TIMESTAMP_LTZ(3)
-                ,WATERMARK                      FOR created_at AS created_at - INTERVAL '15' SECOND
-                ,PRIMARY KEY (_id) NOT ENFORCED
-            ) WITH (
-                 'connector'                           = 'postgres-cdc'
-                ,'hostname'                            = 'postgrescdc'
-                ,'port'                                = '5432'
-                ,'username'                            = 'dbadmin'
-                ,'password'                            = 'dbpassword'
-                ,'database-name'                       = 'demog'
-                ,'schema-name'                         = 'public'
-                ,'table-name'                          = 'transactions'
-                ,'slot.name'                           = 'transactions_python_udf'
-                ,'scan.incremental.snapshot.enabled'   = 'true'
-                ,'scan.startup.mode'                   = 'initial'
-                ,'decoding.plugin.name'                = 'pgoutput'
-                ,'debezium.snapshot.mode'              = 'initial'
-                ,'scan.incremental.snapshot.chunk.size' = '8096'    -- Explicitly set chunk size
-                ,'scan.snapshot.fetch.size'             = '1024'    -- Add fetch size
-                ,'connect.timeout'                      = '30s'     -- Add connection timeout
-            );
-        """
-        
-        table_env.execute_sql(source_table_creation_sql)
-        print("✓ Created source table c_cdcsource.demog.transactions...")
-
-    except Exception as e:
-        print(f"✗ Error Creating source CDC Table")
-        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-        raise e
-    
-
-    # --------------------------------------------------------------------------
-    # Register Apache Paimon Catalog
-    # --------------------------------------------------------------------------
-    # try:
-    #     print("Creating Paimon catalog c_paimon...")
-    #     table_env.execute_sql("""
-    #         CREATE CATALOG c_paimon WITH (
-    #             'type'                          = 'paimon'
-    #             ,'metastore'                    = 'jdbc'
-    #             ,'catalog-key'                  = 'jdbc'
-    #             ,'uri'                          = 'jdbc:postgresql://postgrescat:5432/flink_catalog?currentSchema=paimon_catalog'
-    #             ,'jdbc.user'                    = 'dbadmin'
-    #             ,'jdbc.password'                = 'dbpassword'
-    #             ,'jdbc.driver'                  = 'org.postgresql.Driver'
-    #             ,'warehouse'                    = 's3://warehouse/paimon'
-    #             ,'s3.endpoint'                  = 'http://minio:9000'
-    #             ,'s3.path-style-access'         = 'true'
-    #             ,'table-default.file.format'    = 'parquet'
-    #         );
-    #     """)
-    #     print("✓ Source Paimon Catalog created successfully.")
-        
-    # except Exception as e:
-    #     print(f"✗ Error Creating Paimon Catalog")
-    #     print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-    #     raise e
-
-    # print("Creating database c_paimon.finflow database...")
-    # try:
-    #     table_env.execute_sql("CREATE DATABASE IF NOT EXISTS c_paimon.finflow;")
-    #     print("✓ Paimon catalog and database ready.")
-
-    # except Exception as e:
-    #     print(f"✗ Error Creating source Paimon.finflow Database")
-    #     print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-    #     raise e
-
-
-    # --------------------------------------------------------------------------
-    # Register the UDF
-    # --------------------------------------------------------------------------    
-    print("Registering UDF generate_txn_embedding...")
-    try:
-        table_env.create_system_function("generate_txn_embedding", generate_txn_embedding)
-        print("✓ UDF generate_txn_embedding registered successfully.")
-
-    except Exception as e:
-        print(f"✗ Error Registering UDF generate_txn_embedding function")
-        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-        raise e
-    
-    # --------------------------------------------------------------------------
-    # Create statement set and add INSERT query
-    # --------------------------------------------------------------------------
-    statement_set = table_env.create_statement_set()
-
-    print("Preparing embedding insert query...")
-    embedding_insert_query = f"""
-        INSERT INTO c_paimon.finflow.transactions
-        SELECT 
-             _id
-            ,eventid
-            ,transactionid
-            ,eventtime
-            ,direction
-            ,eventtype
-            ,creationdate
-            ,accountholdernationalid
-            ,accountholderaccount
-            ,counterpartynationalid
-            ,counterpartyaccount
-            ,tenantid
-            ,fromid
-            ,accountagentid
-            ,fromfibranchid
-            ,accountnumber
-            ,toid
-            ,accountidcode
-            ,counterpartyagentid
-            ,tofibranchid
-            ,counterpartynumber
-            ,counterpartyidcode
-            ,amount
-            ,msgtype
-            ,settlementclearingsystemcode
-            ,paymentclearingsystemreference
-            ,requestexecutiondate
-            ,settlementdate
-            ,destinationcountry
-            ,localinstrument
-            ,msgstatus
-            ,paymentmethod
-            ,settlementmethod
-            ,transactiontype
-            ,verificationresult
-            ,numberoftransactions
-            ,schemaversion
-            ,usercode
-            ,generate_txn_embedding(
-                 {target_dimensions}
-                ,eventtime
-                ,direction
-                ,eventtype
-                ,creationdate
-                ,accountholdernationalid
-                ,accountholderaccount
-                ,counterpartynationalid
-                ,counterpartyaccount
-                ,tenantid
-                ,fromid
-                ,accountagentid
-                ,fromfibranchid
-                ,accountnumber
-                ,toid
-                ,accountidcode
-                ,counterpartyagentid
-                ,tofibranchid
-                ,counterpartynumber
-                ,counterpartyidcode
-                ,amount
-                ,msgtype
-                ,settlementclearingsystemcode
-                ,paymentclearingsystemreference
-                ,requestexecutiondate
-                ,settlementdate
-                ,destinationcountry
-                ,localinstrument
-                ,msgstatus
-                ,paymentmethod
-                ,settlementmethod
-                ,transactiontype
-                ,verificationresult
-                ,numberoftransactions
-                ,schemaversion
-                ,usercode
-            ) AS embedding_vector
-            ,{target_dimensions} AS embedding_dimensions
-            ,CURRENT_TIMESTAMP   AS embedding_timestamp
-            ,created_at
-        FROM c_cdcsource.demog.transactions
-    """
-
-    try:
-        statement_set.add_insert_sql(embedding_insert_query)
-        print("✓ Prepared embedding insert query...")
-
-    except Exception as e:
-        print(f"✗ Error Preparing embedding insert query")
-        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-        raise e    
-    
-    
-    # --------------------------------------------------------------------------
-    # Execute the job in detached mode
-    # --------------------------------------------------------------------------
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-    print(f"\nSubmitting job to Flink cluster... - {now}")
-    print("="*80)
-    
-    try:
-        # Execute returns immediately in detached mode
-        table_result = statement_set.execute()
-        print("✓ Submitted job to Flink cluster...")
-
-    except Exception as e:
-        print(f"✗ Error during job submission: {e}")
-        import traceback
-        traceback.print_exc()
-        raise    
-    
-    # Try to get job client info if available
-    try:
-        job_client = table_result.get_job_client()
-        
-        if job_client:
-            job_id = job_client.get_job_id()
-            print(f"✓ Job submitted successfully!")
-            print(f"✓ Job ID: {job_id}")
-            
-            print(f"✓ Pipeline: {pipeline_name}")
-            print(f"✓ Check job status: http://localhost:8084")
-            print(f"✓ The job will process CDC events continuously")
-            print("="*80)                
-    
-            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")    
-            
-            print(f"\nScript completed - {now}")
-            print("Job is now running in the cluster. This script will exit.")
-            print("="*80)
-            
-    except Exception as e:
-        print(f"✗ Job submit Failed to successfully (in detached mode)!")
-        print(f"✗ UDF Error: {str(e)}", file=sys.stderr)
-        raise e    
-
-#end main
-
-
-if __name__ == "__main__":
-    
-    print("="*80)
-    print("STARTING TXN_EMBED_UDF.PY")
-    print("="*80)
-    
-    try:
-        main()
-        print("\n" + "="*80)
-        print("MAIN() COMPLETED SUCCESSFULLY")
-        print("Check Flink UI for job status: http://localhost:8084")
-        print("="*80)
-        sys.exit(0)
-        
-    except Exception as err:
-        print("\n" + "="*80)
-        print(f"FATAL ERROR IN MAIN(): {err}")
-        print("="*80)
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
-        
-# end "__main__"
+# end generate_txn_embedding

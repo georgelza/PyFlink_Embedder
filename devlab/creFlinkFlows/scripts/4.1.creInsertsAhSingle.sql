@@ -1,4 +1,4 @@
--- scripts/3.2.creTargetCmplx.sql
+-- scripts/4.1.creInsertsAhSingle.sql
 -- Insert Statement with inline call to our generate_ah_embedding Python based UDF routine.
 --  => c_paimon.finflow.accountholders, sourced from c_cdcsource.demog.accountholders
 
@@ -9,36 +9,36 @@ USE demog;
 -- Recreate the CDC tables inside this session.
 
 CREATE OR REPLACE TABLE accountholders (
-     _id                BIGINT                  NOT NULL
-    ,nationalid         VARCHAR(16)             NOT NULL
-    ,firstname          VARCHAR(100)
-    ,lastname           VARCHAR(100)
-    ,dob                VARCHAR(10) 
-    ,gender             VARCHAR(10)
-    ,children           INT
-    ,address            STRING
-    ,accounts           STRING
-    ,emailaddress       VARCHAR(100)
-    ,mobilephonenumber  VARCHAR(20)
-    ,created_at         TIMESTAMP_LTZ(3)
-    ,WATERMARK          FOR created_at AS created_at - INTERVAL '15' SECOND
+     _id                            BIGINT                  NOT NULL
+    ,nationalid                     VARCHAR(16)             NOT NULL
+    ,firstname                      VARCHAR(100)
+    ,lastname                       VARCHAR(100)
+    ,dob                            VARCHAR(10) 
+    ,gender                         VARCHAR(10)
+    ,children                       INT
+    ,address                        STRING
+    ,accounts                       STRING
+    ,emailaddress                   VARCHAR(100)
+    ,mobilephonenumber              VARCHAR(20)
+    ,created_at                     TIMESTAMP_LTZ(3)
+    ,WATERMARK                      FOR created_at AS created_at - INTERVAL '15' SECOND
     ,PRIMARY KEY (_id) NOT ENFORCED
 ) WITH (
-     'connector'                           = 'postgres-cdc'
-    ,'hostname'                            = 'postgrescdc'
-    ,'port'                                = '5432'
-    ,'username'                            = 'dbadmin'
-    ,'password'                            = 'dbpassword'
-    ,'database-name'                       = 'demog'
-    ,'schema-name'                         = 'public'
-    ,'table-name'                          = 'accountholders'
-    ,'slot.name'                           = 'accountholders_pyflink'           -- Can't include capital letters
-    ,'scan.incremental.snapshot.enabled'   = 'true'               
-    ,'scan.startup.mode'                   = 'initial'            
-    ,'decoding.plugin.name'                = 'pgoutput'
-    ,'scan.incremental.snapshot.chunk.size' = '4096'    -- Explicitly set chunk size
-    ,'scan.snapshot.fetch.size'             = '512'     -- Add fetch size
-    ,'connect.timeout'                      = '30s'     -- Add connection timeout
+     'connector'                            = 'postgres-cdc'
+    ,'hostname'                             = 'postgrescdc'
+    ,'port'                                 = '5432'
+    ,'username'                             = 'dbadmin'
+    ,'password'                             = 'dbpassword'
+    ,'database-name'                        = 'demog'
+    ,'schema-name'                          = 'public'
+    ,'table-name'                           = 'accountholders'
+    ,'slot.name'                            = 'accountholders_pyflink' 
+    ,'scan.incremental.snapshot.enabled'    = 'true'               
+    ,'scan.startup.mode'                    = 'initial'            
+    ,'decoding.plugin.name'                 = 'pgoutput'
+    ,'scan.incremental.snapshot.chunk.size' = '4096' 
+    ,'scan.snapshot.fetch.size'             = '512'
+    ,'connect.timeout'                      = '30s'
 );
 
 DROP FUNCTION IF EXISTS generate_ah_embedding;
@@ -94,6 +94,3 @@ SELECT
     ,CURRENT_TIMESTAMP      AS embedding_timestamp
     ,created_at
 FROM c_cdcsource.demog.accountholders ;
-
-
--- See 4.3 and 4.4

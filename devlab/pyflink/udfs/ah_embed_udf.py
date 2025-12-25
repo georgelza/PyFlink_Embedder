@@ -4,6 +4,7 @@
 #   Project             :   Account Holder... Streaming account holder embedding vectorizer 
 #   File                :   ah_embed_udf.py
 #   Created             :   8 Dec 2025
+#
 #   Description         :   Calculate vector values for record arriving in source table, outputting the columns + vector 
 #                       :   to a new target table
 #                       :
@@ -29,7 +30,7 @@ from pyflink.table.udf import udf
 from pyflink.table import DataTypes
 from sentence_transformers import SentenceTransformer
 import torch
-import sys, time, logging
+import time, logging
 
 # Configure logging
 logging.basicConfig(
@@ -45,7 +46,7 @@ processed_count = 0
 # Constants
 # --------------------------------------------------------------------------
 # https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
-MODEL           = 'sentence-transformers/all-MiniLM-L6-v2'
+MODEL = 'sentence-transformers/all-MiniLM-L6-v2'
 
 # --------------------------------------------------------------------------
 # Define UDF for embedding generation
@@ -70,7 +71,7 @@ def generate_ah_embedding(target_dimensions
             accountHolder details,
             
         Returns:
-            array of float: ....
+            array of DOUBLE: ....
     """
     global processed_count
     
@@ -79,7 +80,7 @@ def generate_ah_embedding(target_dimensions
         
         # Log every 100 records
         if processed_count % 100 == 0:
-            logger.info(f"Processed {processed_count} records so far...")
+            logger.info(f"Processed Ah {processed_count} records so far...")
         
         # Use a class variable to cache the model across invocations
         if not hasattr(generate_ah_embedding, 'model'):
@@ -129,10 +130,10 @@ def generate_ah_embedding(target_dimensions
         elapsed = time.time() - start_time
         
         if elapsed > 1.0:  # Log slow operations
-            logger.warning(f"Slow Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
+            logger.warning(f"Slow Ah Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
         
         else:
-            logger.info(f"Embedding generation rt: {elapsed:.2f}s for record {processed_count}")
+            logger.info(f"Embedding Ah generation rt: {elapsed:.2f}s for record {processed_count}")
 
         # Convert to list of floats for Flink        
         final_size = int(target_dimensions)
@@ -140,7 +141,7 @@ def generate_ah_embedding(target_dimensions
 
     
     except Exception as e:
-        logger.error(f"UDF Error: processing record {processed_count}: {str(e)}", exc_info=True, file=sys.stderr)
+        logger.error(f"UDF Error: Ah processing record {processed_count}: {str(e)}", exc_info=True, file=sys.stderr)
         # Return empty embedding on error instead of failing
         return [0.0] * target_dimensions
 

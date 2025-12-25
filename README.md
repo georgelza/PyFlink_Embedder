@@ -5,11 +5,9 @@
 
 2. Consume from PostgreSQL => Apacke Flink tables using CDC
 
-3. Flatten using PyFlink Function 1 -> New Tables
+3. We have two PyFlink based vector embedding User Defined Functions (UDF's) to Calculate vector embedding values.
 
-4. Calculate vector embedding values using PyFlink, comsuming New tables from #3. -> Function 2 (AccountHolders) and Function 3 (Transactions) => Output to new Flink Table
-
-5. -> Push to Apache Paimon Tabes
+4. These are used as part of a Insert into `c_paimon.finflow.<target table>` select (fields..., generate_ah_embedding(fields)) from `c_cdcsource.demog.<source table>`;
 
 
 BLOG: [Using Pyflink UDF to calculate embedding vectors on inbound tables via Flink CDC]()
@@ -23,14 +21,23 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 - Execute `make run` as defined in `devlab/Makefile` to run environment.
   
-- Deploy Catalog `make cat`
+- Deploy Catalog `make run`       -> Run MinIO/S3 based version.
 
-- Deploy Finflow `make finflow`
+- Deploy Catalog `make run-fs`    -> Run Filesystem based version.
+
+- Deploy Stack `make deploy`      -> Run MinIO/S3 based version.
+
+- Deploy Stack `make deploy-fs`   -> Run Filesystem based version.
 
 - Deploys accountHolder embedding flow
-  -  `make ah`
+
+  -  `make ahs`
   
-- Execute `Shadowtraffic` to create Workload (#1 AccountHolders, #2 Financial Transactions) 
+- Deploys transaction embedding flow
+
+  -  `make txns`
+
+- Execute `Shadowtraffic` to create Workload for our #1 AccountHolders, #2 Financial Transactions tables.
 
   - => Output to 2 PostgreSQL Tables located in postgrescdc Postgres based database/service.
 
@@ -38,25 +45,21 @@ GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
   - If you want to increase the data generate rate execute `<Project Root>/shadowtraffic/run_pg2.sh`.
 
-- At this point you haev an incoming data stream into the PostgreSQL tables (`accountholders` and `transactions`).
+## Summary
 
-- Deploy transactions embedding flow
+At this point you have an incoming data stream into the PostgreSQL tables (`accountholders` and `transactions`).
 
-  - Execute `devlab/pyflink/txn_embed.cmd` to start Embedding job on Flink Cluster of #2 data set / Financial Transactions.
+From here it is consumed, embedding vectors calculated and pushed out to our Apache Paimon based Lakehouse.
 
+### S3/ MinIO
 
-- Next is moving the data into one or other direction.
+<img src="blog-doc/diagrams/SuperLab-minio-v1.2.png" alt="Our Build" width="600">
+
+### Filesystem
   
-  - You can either move the data directly to a Iceberg or a Paimon based table.
-  
-  - You can push the data to Apache Fluss tables, which you can configure with tiering which will then move/tier the data onto:
-  
-    - Apache Iceberg or Apache Paimon.
-  
-  - Not shown is the option to add a Apache Kafka/Confluent based Kafka cluster, allowing the user to push the data onto Kafka Topics from where you can utlize the Kafka Connect Framework to sink the data into one of many many persistent store.s
+<img src="blog-doc/diagrams/SuperLab-fs-v1.2.png" alt="Our Build" width="600">
 
-
-## Stack
+## Regarding our Stack
 
 The following stack is deployed using one of the provided  `<Project Root>/devlab/docker-compose-*.yaml` files as per above.
 
@@ -83,21 +86,21 @@ From were they will be CDC source into our Flink environment into Flink tables t
 ### 1. AccountHolders
 
 ```bash
-_id
+_id                                                     => Sequentially incrementing value
 nationalid                                              => Random 16 Digits unique Number, excluded from embedding calc
     firstname
     lastname
     dob                                                 => YY/MM/DD   Min = current - 16yrs
     gender
     children
-    address                                             => Can we drive addresses chosen based on country via .env value
+    address                                             => Can we drive addresses chosen based on country via .env value 
     {
-        # Number Street
+        Street Address
         Suburb
         Town
-        Provice/State
+        Province
         Country
-        Postal_code
+        Postal Code
     }
     accounts [
         # (1-5)                                         => .env driven
@@ -134,7 +137,7 @@ nationalid                                              => Random 16 Digits uniq
 ### Outbound Txn: From Payer to Payee
 
 ```bash
-
+    _id                                                 => Sequentially incrementing value
     eventId                                             => UUIDv7   Unique, excluded from embedding calc
     transactionid                                       => UUIDv7   Shared with Inbound, excluded from embedding calc
         eventtime                                       => "2023-07-31T12:59:02"
@@ -190,7 +193,7 @@ nationalid                                              => Random 16 Digits uniq
 (separate insert/record into Transaction table)
 
 ```bash
-
+    _id                                                 => Sequentially incrementing value
     eventId                                             => UUIDv7   Unique, excluded from embedding calc
     transactionid                                       => UUIDv7   Shared with Inbound, excluded from embedding calc
         eventtime                                       => "2023-07-31T12:59:02"
@@ -239,17 +242,25 @@ nationalid                                              => Random 16 Digits uniq
         embedding_dimensions
         embedding_timestamp
         created_at
+
+
 ```
 
 
+<img src="blog-doc/diagrams/rabbithole.jpg" alt="Our Build" width="600">
+
+
 ### By: George Leonard
+
+
 - georgelza@gmail.com
 - https://www.linkedin.com/in/george-leonard-945b502/
 - https://medium.com/@georgelza
 
 
 
-### More Reading
+<img src="blog-doc/diagrams/TechCentralFeb2020-george-leonard.jpg" alt="Our Build" width="600">
+
 
 
 

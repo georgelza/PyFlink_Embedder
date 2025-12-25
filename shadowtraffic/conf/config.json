@@ -112,7 +112,7 @@
                     "streetAddress": {"_gen": "string", "locale": ["en", "za"], "expr": "#{Address.streetAddress}"},
                     "suburb":        {"_gen": "string", "locale": ["en", "za"], "expr": "#{Address.cityPrefix}"},
                     "town":          {"_gen": "string", "locale": ["en", "za"], "expr": "#{Address.cityName}" },
-                    "provice":       {"_gen": "string", "locale": ["en", "za"], "expr": "#{Address.state}" },
+                    "province":      {"_gen": "string", "locale": ["en", "za"], "expr": "#{Address.state}" },
                     "country":       {"_gen": "var",    "var": "country"},
                     "postalCode":    {"_gen": "string", "locale": ["en", "za"], "expr": "#{Address.postcode}"}
                 },

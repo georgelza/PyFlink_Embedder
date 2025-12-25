@@ -1,12 +1,4 @@
 
--- Thinking is we will consume from PostgreSQL sources, then use a PyFlink to flatten the structure, outputting to a Fluss table.
--- then reading new Fluss table, calculate embeddings, output to another Fluss table/s. 
--- This in turn will be configured with Lakehouse tiering into Paimon table on MinIO S3
-
--- Catalog c_cdcsource moved to 2.1.creCdc.sql
--- This is due t this being an generic in memory catalog and is required to be re-created in every session together with the 
--- CDC backed tables.
-
 USE CATALOG default_catalog;
   
 CREATE CATALOG c_cdcsource WITH 
@@ -39,13 +31,7 @@ CREATE CATALOG c_paimon WITH (
 USE CATALOG c_paimon;
 
 -- Output from PyFlink routine, embedded tables
-CREATE DATABASE IF NOT EXISTS c_paimon.finflow;
-
--- Output from CTAS - Flat structured, source from c_paimon.finflow, potentially to a different destination
-CREATE DATABASE IF NOT EXISTS c_paimon.ctas;            
-
--- Transformed into complex JSON Structure, sourced from c_paimon.finflow
-CREATE DATABASE IF NOT EXISTS c_paimon.cmplx;            
+CREATE DATABASE IF NOT EXISTS c_paimon.finflow;         
 
 SHOW DATABASES;
 

@@ -1,4 +1,4 @@
--- Generated master.sql
+-- Generated fs master.sql
 
 -- Thinking is we will consume from PostgreSQL sources, then use a PyFlink to flatten the structure, outputting to a Fluss table.
 -- then reading new Fluss table, calculate embeddings, output to another Fluss table/s. 
@@ -31,7 +31,7 @@ CREATE CATALOG c_paimon WITH (
     ,'jdbc.user'                     = 'dbadmin'
     ,'jdbc.password'                 = 'dbpassword'
     ,'jdbc.driver'                   = 'org.postgresql.Driver'
-    ,'warehouse'                     = 'file:///data'
+    ,'warehouse'                     = 'file:///paimon'
     ,'table-default.file.format'     = 'parquet'
 );
 
@@ -47,6 +47,7 @@ CREATE DATABASE IF NOT EXISTS c_paimon.ctas;
 CREATE DATABASE IF NOT EXISTS c_paimon.cmplx;            
 
 SHOW DATABASES;
+
 
 -- next execute 2.1
 -- scripts/3.1.creTargetFinflow.sql

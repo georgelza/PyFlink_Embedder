@@ -13,8 +13,6 @@ project/
 │   ├── README.md
 │   ├── txn_embed_udf.py
 │   └── ah_embed_udf.py
-├── master.sql
-├── txn_embed.cmd
 └── README.md
 
 
