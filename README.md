@@ -51,36 +51,6 @@ The stack allows for the Lakehouse tables to either be created on S3 Object stor
 <img src="blog-doc/diagrams/SuperLab-fs-v1.2.png" alt="Our Build" width="600">
 
 
-### ebedding Vector
-
-For an example of how an embedding vector looks like, See: `<Project root>/misc/embedding.vector`
-
-
-## Summary
-
-Ok, the code was not that difficult, or is not really that complicated. What did come out is the tweaing of the settings on a docker-compose based lab, to balance the memory etc for Apache Flink. Some of this is due to us using UDF's andpretty sure this will also come up in real life, in production.
-
-Also, the various deployment options, how to be able to tear things down, make a tweak and then redeploy. Time spend doing this adds up.
-
-Did figure along the way to be open to making changes, from original plans. Hey we're in IT, accept change, invite change, adopt change.
-
-
-**Now**… At this point we have allot of options, for the purpose of the blog I wrote the outbound data stream into Apache Paimon. I could however just as easily have pushed this onto:
-
-- Into a Real time streaming storage platform like **[Apache Fluss (incubating)](https://fluss.apache.org)**, from there we can then take advantage the included Lakehouse tiering into **[Apache Paimon](https://paimon.apache.org)**, **[Apache Iceberg](https://iceberg.apache.org)** or **[LanceDB](https://lancedb.com)**, side track… why is this attractive, well it means all the work to get our data into a Lakehouse is taken care of for us, it also means we have sub second data freshness in our Apache Flink/Apache Fluss later, all with **Union Read** query capabilities into our Lakehouse tier.
-
-- Apache Kafka Topics, where we can further process the data and then utilise the **Kafka Connect** framework to sink it into a targets (Sink options) of choosing, i.e.: [Neo4J](https://neo4j.com) Graph based data store enabling Graph based Analytics.
-
-- [Mongo DB](https://www.mongodb.com/) Collection
-
-- … <many more>
-
-There are so many options that can be brought together.
-
-Well, hope I got it all accurately documented and copied, Hope it’s of benefit for someone. 
-
-Thanks for following. Till next time.
-
 
 ## Deployment
 
@@ -346,12 +316,53 @@ nationalid                                              => Random 16 Digits uniq
 
 ```
 
+### Embedding Vector
+
+For an example of how an embedding vector looks like, See: `<Project root>/misc/embedding.vector`
+
+
+## Summary
+
+Ok, the code was not that difficult, or is not really that complicated. What did come out is the tweaing of the settings on a docker-compose based lab, to balance the memory etc for Apache Flink. Some of this is due to us using UDF's andpretty sure this will also come up in real life, in production.
+
+Also, the various deployment options, how to be able to tear things down, make a tweak and then redeploy. Time spend doing this adds up.
+
+Did figure along the way to be open to making changes, from original plans. Hey we're in IT, accept change, invite change, adopt change.
+
+
+**Now**… At this point we have allot of options, for the purpose of the blog I wrote the outbound data stream into Apache Paimon. I could however just as easily have pushed this onto:
+
+- Into a Real time streaming storage platform like **[Apache Fluss (incubating)](https://fluss.apache.org)**, from there we can then take advantage the included Lakehouse tiering into **[Apache Paimon](https://paimon.apache.org)**, **[Apache Iceberg](https://iceberg.apache.org)** or **[LanceDB](https://lancedb.com)**, side track… why is this attractive, well it means all the work to get our data into a Lakehouse is taken care of for us, it also means we have sub second data freshness in our Apache Flink/Apache Fluss later, all with **Union Read** query capabilities into our Lakehouse tier.
+
+- Apache Kafka Topics, where we can further process the data and then utilise the **Kafka Connect** framework to sink it into a targets (Sink options) of choosing, i.e.: [Neo4J](https://neo4j.com) Graph based data store enabling Graph based Analytics.
+
+- [Mongo DB](https://www.mongodb.com/) Collection
+
+- … <many more>
+
+There are so many options that can be brought together.
+
+Well, hope I got it all accurately documented and copied, Hope it’s of benefit for someone. 
+
+
+**THE END**
+
+
+Thanks for following. Till next time.
+
+
+### The Rabbit Hole
 
 <img src="blog-doc/diagrams/rabbithole.jpg" alt="Our Build" width="600">
 
+And like that we’re done with our little trip down another Rabbit Hole.
+
+## ABOUT ME
+
+I’m a techie, a technologist, always curious, love data, have for as long as I can remember always worked with data in one form or the other, Database admin, Database product lead, data platforms architect, infrastructure architect hosting databases, backing it up, optimizing performance, accessing it. Data data data… it makes the world go round.
+In recent years, pivoted into a more generic Technology Architect role, capable of full stack architecture.
 
 ### By: George Leonard
-
 
 - georgelza@gmail.com
 - https://www.linkedin.com/in/george-leonard-945b502/
