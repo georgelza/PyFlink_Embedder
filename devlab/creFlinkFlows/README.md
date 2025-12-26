@@ -6,13 +6,13 @@
 
 Will create the various catalogs and databases.
 
-- c_cdcsource - Generic In Memory based catalog
+- `c_cdcsource` - Generic In Memory based catalog
   
-  - demog
+  - `demog`
 
-- c_paimon - Apache Flink JDBC based catalog
+- `c_paimon` - Apache Flink JDBC based catalog
   
-  - finflow
+  - `finflow`
 
 
 ### 2.1.creCdcDemog.sql
@@ -20,40 +20,40 @@ Will create the various catalogs and databases.
 This will create our transciant CDC based tables which will connect to our PostgreSQL datastore and expose data using the Flink CDC capabilities
 This script will be used/called by other scripts, this is required as the catalog/database is only visible in the current session.
 
-Catalog: c_cdcsource.demog
+Catalog: `c_cdcsource`.`demog`
 
-- accountholders
+- `accountholders`
 
-- transactions 
+- `transactions` 
 
 
 ### 3.1.creTargetsFinflow.sql
 
 Create our output tables that will recieve the "vectorized/embedding" records, sourced from 4.1 & 4.2
 
-Catalog: c_paimon.finflow
+Catalog: `c_paimon`.`finflow`
 
-- accountholders
+- `accountholders`
 
-- transactions 
+- `transactions` 
 
 
 ### 4.1.creInsertsAhSingle.sql
 
-Run the Insert statement with the inline UDF call to calculate the embedding values
+Run the Insert statement with the inline UDF call (`generate_ah_embedding`) to calculate the embedding values
 
-Catalog: c_paimon.finflow
+Catalog: `c_paimon`.`finflow`
 
-- accountholders
+- Output to `accountholders`
 
 
 ### 4.2.creInsertsTxnSingle.sql
 
-Run the Insert statement with the inline UDF call to calculate the embedding values
+Run the Insert statement with the inline UDF call (`generate_txn_embedding`) to calculate the embedding values
 
-Catalog: c_paimon.finflow
+Catalog: `c_paimon`.`finflow`
 
-- transactions 
+- Outoput to `transactions` 
 
 
 

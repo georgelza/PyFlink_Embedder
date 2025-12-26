@@ -1,55 +1,46 @@
-## Vector Embedding of Account Holders & Financial Transactions in the Realtime Transaction world, at volume
+## Using Pyflink UDF to calculate embedding vectors on inbound tables via Flink CDC
 
+So, the original idea, generate data, do embedding using Pyflink, store into a lakehouse, simple.
 
-1. Generate all data Using Shadowtraffic => into PostgreSQL
+Well mission accomplished, even if we did changed some of the original outputs, will see ifi can circle back on the next demo/blog... ye, there is another one already drawn out, started.
 
-2. Consume from PostgreSQL => Apacke Flink tables using CDC
+Our little project, create accountHolder records (that defines a person, family at an address) and then financial transactions (well who can life without spending money) modeled as a outbound and inbound event, very real world.
 
-3. We have two PyFlink based vector embedding User Defined Functions (UDF's) to Calculate vector embedding values.
+These are all inserted into a PostgreSQL database/tables.
 
-4. These are used as part of a Insert into `c_paimon.finflow.<target table>` select (fields..., generate_ah_embedding(fields)) from `c_cdcsource.demog.<source table>`;
+We then utilize Apache Flink CDC to consume these into trancient tables inside Apache Flink (we're using Generic in memory catalog).
 
+Next up, we need to do the embedding calculation, this is done using two Pyflink User Defined functions (UDF), (See: `<Project root/devlab/pyflink/udfs/`).
 
+These are called as per below, as inline function calls, returning the embedding vector that is inserted into our lakehouse, based on Apache Paimon.
+
+```sql
+    Insert into c_paimon.finflow.<target table>
+    select (
+         fields
+        , ...
+        , ...
+        ,generate_<function>_embedding(
+             fields
+            , ...
+            , ...
+        ) AS embedding_vector
+        ,384                    AS embedding_dimensions
+        ,CURRENT_TIMESTAMP      AS embedding_timestamp
+        ,created_at
+    ) 
+    from c_cdcsource.demog.<source table>;
+```
+
+ 
 BLOG: [Using Pyflink UDF to calculate embedding vectors on inbound tables via Flink CDC]()
 
 GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
 
-## Deployment
+## Overview
 
-- `<Project Root>/devlab/docker-compose.yml` which can be brought online by executing below, (this will use `.env`).
-
-- Execute `make run` as defined in `devlab/Makefile` to run environment.
-  
-- Deploy Catalog `make run`       -> Run MinIO/S3 based version.
-
-- Deploy Catalog `make run-fs`    -> Run Filesystem based version.
-
-- Deploy Stack `make deploy`      -> Run MinIO/S3 based version.
-
-- Deploy Stack `make deploy-fs`   -> Run Filesystem based version.
-
-- Deploys accountHolder embedding flow
-
-  -  `make ahs`
-  
-- Deploys transaction embedding flow
-
-  -  `make txns`
-
-- Execute `Shadowtraffic` to create Workload for our #1 AccountHolders, #2 Financial Transactions tables.
-
-  - => Output to 2 PostgreSQL Tables located in postgrescdc Postgres based database/service.
-
-  - This is done by executing `<Project Root>/shadowtraffic/run_pg1.sh`.
-
-  - If you want to increase the data generate rate execute `<Project Root>/shadowtraffic/run_pg2.sh`.
-
-## Summary
-
-At this point you have an incoming data stream into the PostgreSQL tables (`accountholders` and `transactions`).
-
-From here it is consumed, embedding vectors calculated and pushed out to our Apache Paimon based Lakehouse.
+The stack allows for the Lakehouse tables to either be created on S3 Object storage hosted on MinIO container or on the local file system `<Project root/devlab/data/flink/paimon/`.
 
 ### S3/ MinIO
 
@@ -58,6 +49,49 @@ From here it is consumed, embedding vectors calculated and pushed out to our Apa
 ### Filesystem
   
 <img src="blog-doc/diagrams/SuperLab-fs-v1.2.png" alt="Our Build" width="600">
+
+
+## Summary
+
+Ok, the code was not that difficult, or is not really that complicated. What did come out is the tweaing of the settings on a docker-compose based lab, to balance the memory etc for Apache Flink. Some of this is due to us using UDF's andpretty sure this will also come up in real life, in production.
+
+Also, the various deployment options, how to be able to tear things down, make a tweak and then redeploy. Time spend doing this adds up.
+
+Did figure along the way to be open to making changes, from original plans. Hey we're in IT, accept change, invite change, adopt change.
+
+
+## Deployment
+
+- Bring our stack up based on `<Project Root>/devlab/docker-compose.yml` or `<Project Root>/devlab/docker-compose-fs.yml`, by executing either of the following 2(both of these will use `.env` environment file with some variables, also notice the `.pwd` for some "secrets").
+  
+  - Deploy stack `make run`                       -> Run MinIO/S3 based version.
+
+  - Deploy stack `make run-fs`                    -> Run Filesystem based version.
+
+- Next we need to build our catalogs and tables,
+
+  - Deploy catalog and tables  `make deploy`      -> Run MinIO/S3 based version.
+
+  - Deploy catalog and tables `make deploy-fs`    -> Run Filesystem based version.
+
+
+- Deploy our PyFlink UDF
+
+  - `make ahs`      -> Deploy our accountHolder embedding flow as a Apache Flink job
+
+  
+  - `make txns`     -> Deploy our transaction embedding flow as a Apache Flink job
+
+
+- Generate data,
+
+  - Execute our `Shadowtraffic` based data generator to create our data products for #1 AccountHolders, #2 Financial Transactions tables.
+    This will Ooutput into two PostgreSQL Tables provided by our `postgrescdc` docker-compose service.
+    The data generation is run by executing `<Project Root>/shadowtraffic/run_pg1.sh`.
+    If you want to increase the data generate rate execute `<Project Root>/shadowtraffic/run_pg2.sh`.
+
+
+
 
 ## Regarding our Stack
 

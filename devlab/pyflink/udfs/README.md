@@ -1,12 +1,9 @@
 ## Define our 2 Python routines, to calculate embedding vectors.
 
-### Calculate embedding vectors for accountholders
 
-pyflink/udfs/ah_embed_udf.py
+- `<Projecr root>/pyflink/udfs/ah_embed_udf.py`     -> Calculate embedding vectors for accountholders
 
-### Calculate embedding vectors for transactions
-
-pyflink/udfs/txn_embed_udf.py
+- `<Projecr root>/pyflink/udfs/txn_embed_udf.py`    -> Calculate embedding vectors for transactions
 
 
 ## MODEL
@@ -14,8 +11,6 @@ pyflink/udfs/txn_embed_udf.py
 We used the The `all-MiniLM-L6-v2` for both the accountHolder and tansaction embedding.
 
 The `all-MiniLM-L6-v2` model is one of the most lightweight and efficient sentence-transformer models. Its memory footprint is very small, making it suitable for resource-constrained environments like Docker containers or small cloud instances.
-
-Take note of the below numbers and how they impact the settings in `devlab/conf/confi.yaml`
 
 
 ### 1. Base Memory Requirements
@@ -62,3 +57,43 @@ Python Worker Overhead: Each Flink `TaskManager` starts a separate Python proces
 
 Managed Memory: Ensure your `config.yaml` leaves enough `Off-Heap Memory` for these `Python` processes, as they live outside the JVM heap. A setting of `taskmanager.memory.task.off-heap.size: 1gb` is usually the "sweet spot" for this specific model.
 
+
+### Summary or is that Reality
+
+Took some doing to get our deployment stable.
+
+Take note of the above numbers and how they impact the settings in `devlab/conf/confi.yaml` for the `taskmanager` memory setup.
+
+
+```yaml
+taskmanager:
+  bind-host: 0.0.0.0
+  numberOfTaskSlots: 6
+  memory:
+    process:
+      size: 12gb        # This must be LESS than the Docker limit to leave room for the Python process
+    jvm-overhead:
+      min: 512mb        # Increase the Overhead Max to allow for the driver buffers
+      max: 2gb          # Fix the Overhead limit to allow Flink's math to succeed
+    task:
+      off-heap:         # Explicitly set Task Off-Heap (Crucial for your Python UDF weights)
+        size: 4gb       # Specifically reserve memory for the UDF/Room for the ML model
+    managed:
+      fraction: 0.1     # Paimon doesn't need huge managed memory here
+      size: 2gb         # DO NOT set taskmanager.memory.flink.size manually (let Flink derive it)
+                        # Explicitly set Managed Memory (important for Paimon/RocksDB)
+    network:            # Stabilize Networking
+      min: 256mb
+      max: 512mb
+
+```
+
+Also note the value for `taskmanager.memory.process.size` needs to match our docker-compose.yaml file, for the taskmanager service
+
+```yaml
+    deploy:
+      replicas: 1
+      resources:
+          limits:
+            memory: 12G
+```

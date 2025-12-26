@@ -4,47 +4,13 @@
 
 ### Directory Structure
 
-project/
-├── scripts/
-│   ├── README.md
-│   ├── register_ah_udfs.sql
-│   └── register_txn_udfs.sql
-├── udfs/
-│   ├── README.md
-│   ├── txn_embed_udf.py
-│   └── ah_embed_udf.py
-└── README.md
-
-
-### Start SQL Client
-
-```bash
-make fsql
 ```
-
-
-### At the prompt:
-
-```sql
-
-SOURCE /pyflink/scripts/register_ah_udfs.sql;
-
--- Issue 4: Tables don't exist
--- Make sure your source and sink tables are created before running the INSERT:
--- Verify tables exist
-SHOW TABLES;
-
--- Check table structure
-DESCRIBE c_cdcsource.demog.accountholders;
-DESCRIBE c_paimon.finflow.accountholders;
-
--- Alternative: Run Everything in One Session
--- You can also combine everything in a single SQL file:
--- File: scripts/run_all.sql
--- Add Python UDF file
-
--- Register the function
-CREATE TEMPORARY FUNCTION upper_case AS 'upper_udf.uppercase_str' LANGUAGE PYTHON;
+pyflink/
+├── udfs/
+│   ├── ah_embed_udf.py
+│   ├── README.md
+│   └── txn_embed_udf.py
+└── README.md
 ```
 
 
@@ -62,12 +28,12 @@ Python UDFs are fully supported in Flink 1.20.x
 
 Command Purpose 
 
-- ADD FILE '/path/to/file.py' Add Python file to session 
+- ADD FILE '/path/to/file.py'   Add Python file to session 
 - CREATE TEMPORARY FUNCTION name AS 'module.func' 
-- LANGUAGE PYTHON Register Python UDF 
-- SHOW FUNCTIONS List all available functions 
-- DROP FUNCTION name Remove a function 
-- SOURCE /path/to/script.sql Execute SQL script file
+- LANGUAGE PYTHON             Register Python UDF 
+- SHOW FUNCTIONS              List all available functions 
+- DROP FUNCTION name          Remove a function 
+- SOURCE /path/to/script.sql  Execute SQL script file
 
 
 ## Summary
@@ -79,8 +45,11 @@ Command Purpose
 ✅ All files follow Flink 1.20.x syntax and conventions
 
 
+## Alternative PyFlink Job submit options
 
+### UDF as a Flink Sql-client submitted job
 
+```bash
 #!/bin/bash
 
 export PYFLINK_CLIENT_EXECUTABLE=/usr/bin/python3
@@ -93,68 +62,29 @@ export PYTHONPATH="/pyflink/udfs:$PYTHONPATH"
 # Execute with Python configuration
 $SQL_CLIENT \
   -pyexec /usr/bin/python3 \
-  -pyfs file:///pyflink/udfs \
-  -f master.sql
-
-
-# Complete Example Structure**
-```
-project/
-│
-├── scripts/
-│   ├── README.md
-│   ├── register_ah_embed_udfs.sql
-│   ├── register_txn_embed_udfs.sql
-│   └── test_ah_udf.sql
-│
-├── udfs/
-│   ├── ah_embed_udf.py
-│   ├── README.md
-│   └── txn_embed_udf.py
-│
-├── master.sh
-├── master.sql
-├── README.md
-├── README1.md
-└── txn_embed.cmd
+  -pyfs file:///pyflink/udfs 
 ```
 
-## NOTE: Tables are created via devlab/creFlinkFlows/master.sql also mounted onto Jobmanager into /creFlinkFlows/master.sql
+### UDF as a Flink Job
+
+```bash
+#!/bin/bash
+
+export FLINK_CLIENT="/opt/flink/bin/flink"
+
+$SQL_CLIENT run \
+    -d \
+    -m jobmanager:8081 \
+    -py /pyflink/udfs/our_udf.py \
+    -j /opt/flink/lib/flink-sql-connector-postgres-cdc-3.5.0.jar \
+    -j /opt/flink/lib/flink-python-1.20.2.jar \
+    -j /opt/flink/lib/postgresql-42.7.6.jar
+```
 
 
+## Flattening our json structured "string" column 
 
-
-## Deploying our Pyflink UDF's(User Defined Functions.)
-
-### Deployment
-
-I have designed the embedding "example" using two different patterns.
-
-- The first is an `Insert into <target table> (<columns>) as select (<columns>) from source table;`
-  
-  For this option we include a call to the generate_ah_embedding() UDF as part of the select block, providing the function with the required field values.
-
-  - This is accomplished by deploying the script as per `<Project root>/devlab/creFlinkFlows/scripts/4.1.creInsertsAh.sql`, You can either copy/past the commands contained in the sql script, or
-
-  - xxx  or 
-  
-  - by executing `make ins_ah` from withing the `<Project root>/devlab/` directory.
-
-
-- The second is a standalone Pyflink job executed at the `Jobmanager` CLI from within the `/pyflink/` directory.
-  
-  - `make jm`
-
-  - `cd /pyflink`
-  
-  - copy command from `txn_embed.cmd` into jobmanager terminal and hit ENTER.
-  
-  - or by executing `make ins_txn` from withing the `<Project root>/devlab/` directory.
-
-
-
-
-### Flattening our json structured "string" column 
+Lets side track a bit, if you're interested in flattening complex data inbound, that has been cast to a String... a side result of the CDC process see the below repo.
 
 This is accomplished using an awesome package written and made available by [Hans-Peter Grahsl](https://www.linkedin.com/in/hpgrahsl/) ...
 
