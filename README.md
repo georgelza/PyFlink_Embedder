@@ -33,7 +33,7 @@ These are called as per below, as inline function calls, returning the embedding
 ```
 
  
-BLOG: [Using Pyflink UDF to calculate embedding vectors on inbound tables via Flink CDC]()
+BLOG: [Using Pyflink UDF to calculate embedding vectors on inbound tables via Flink CDC](https://medium.com/@georgelza/using-pyflink-udf-to-calculate-embedding-vectors-on-inbound-tables-via-flink-f77ce605a429)
 
 GIT REPO: [PyFlink_Embedder](https://github.com/georgelza/PyFlink_Embedder.git)
 
