@@ -51,6 +51,11 @@ The stack allows for the Lakehouse tables to either be created on S3 Object stor
 <img src="blog-doc/diagrams/SuperLab-fs-v1.2.png" alt="Our Build" width="600">
 
 
+### Mebedding Vector
+
+For an example of how an embedding vector looks like, See: `<Project root>/misc/embedding.vector`
+
+
 ## Summary
 
 Ok, the code was not that difficult, or is not really that complicated. What did come out is the tweaing of the settings on a docker-compose based lab, to balance the memory etc for Apache Flink. Some of this is due to us using UDF's andpretty sure this will also come up in real life, in production.
@@ -58,6 +63,18 @@ Ok, the code was not that difficult, or is not really that complicated. What did
 Also, the various deployment options, how to be able to tear things down, make a tweak and then redeploy. Time spend doing this adds up.
 
 Did figure along the way to be open to making changes, from original plans. Hey we're in IT, accept change, invite change, adopt change.
+
+
+Now… At this point we have allot of options, for the purpose of the blog I wrote the outbound data stream into Apache Paimon. I could however just as easily have pushed this onto:
+- Apache Kafka Topic, processed it and then use their Connect framework to sink it into a target of choosing,
+- Mongo DB Collection
+- Into a Real time streaming storage platform like Apache Fluss (incubating), and from there utilised their Lakehouse tiering into Apache Paimon, Apache Iceberg or LanceDB.
+
+There are so many options that can be brought together.
+
+Well, hope I got it all accurately documented and copied, Hope it’s of benefit for someone. 
+
+Thanks for following. Till next time.
 
 
 ## Deployment
