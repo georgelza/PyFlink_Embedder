@@ -7,7 +7,7 @@ RUN echo "--> Installing system dependencies" \
     && apt-get update \
     && apt-get install -y $build_deps
 
-# 2. Environment Variables [cite: 1, 2]
+# 2. Environment Variables 
 ENV PYTHON_HOME=/usr/bin/python3.10
 ENV PATH=$PATH:$PYTHON_HOME
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
@@ -19,12 +19,12 @@ ENV PAIMON_VERSION=1.3.1
 ENV POSTGRESQL_CONNECTOR=42.7.6
 ENV FLINK_CDC=3.5.0
 
-# FIX: Classpath must include all directories containing your JARs [cite: 1, 8]
+# FIX: Classpath must include all directories containing your JARs
 ENV HADOOP_CLASSPATH=/opt/flink/lib/*
 
 WORKDIR ${FLINK_HOME}
 
-# 3. Python Setup [cite: 1, 2, 3]
+# 3. Python Setup 
 RUN echo "--> Setup Python Environment" \
     && python3 -m pip install --upgrade pip setuptools wheel \
     && /usr/bin/pip3 install apache-flink==${FLINK_VERSION_FULL} \
@@ -40,7 +40,7 @@ RUN echo "-> Install JARs: S3 Plugin (Internal Flink System)"
 RUN mkdir -p ./plugins/s3-fs-hadoop && \
     mv /opt/flink/opt/flink-s3-fs-hadoop-${FLINK_VERSION_FULL}.jar ./plugins/s3-fs-hadoop/
 
-# 6. Install JARs: Connectors & Hadoop [cite: 4, 5, 6, 7, 8]
+# 6. Install JARs: Connectors & Hadoop 
 # Note: Moving all JARs to /lib/ ensures they are in the default system classpath
 RUN echo "-> Install JARs: Postgres Driver and Flink CDC Postgres connector"
 COPY stage/flink-sql-connector-postgres-cdc-${FLINK_CDC}.jar   ${FLINK_HOME}/lib/
@@ -67,7 +67,7 @@ COPY stage/paimon-s3-${PAIMON_VERSION}.jar                                      
 COPY stage/paimon-flink-${FLINK_VERSION_SHORT}-${PAIMON_VERSION}.jar            ${FLINK_HOME}/lib/
 
 
-# 10. Hadoop Configuration for S3A (MinIO) [cite: 10, 11, 12]
+# 10. Hadoop Configuration for S3A (MinIO)
 RUN echo "--> Create Hadoop Configuration" && \
     cat > ${HIVE_HOME}/core-site.xml <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -103,7 +103,7 @@ RUN echo "--> Create Hadoop Configuration" && \
 </configuration>
 EOF
 
-# 8. Cleanup and Permissions [cite: 12]
+# 8. Cleanup and Permissions 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* && \
     chown -R flink:flink $FLINK_HOME 
 
