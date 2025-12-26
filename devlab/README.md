@@ -48,4 +48,4 @@ This will create our `c_paimon` catalog on the local file system into `./data/fl
 
 From within `<Project root>/shadowtraffic`
 
-Execute run_ph1.sh
+Execute run_pg1.sh

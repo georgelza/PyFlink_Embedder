@@ -15,21 +15,21 @@ Next up, we need to do the embedding calculation, this is done using two Pyflink
 These are called as per below, as inline function calls, returning the embedding vector that is inserted into our lakehouse, based on Apache Paimon.
 
 ```sql
-    Insert into c_paimon.finflow.<target table>
-    select (
-         fields
+Insert into c_paimon.finflow.<target table>
+select (
+        fields
+    , ...
+    , ...
+    ,generate_<function>_embedding(
+            fields
         , ...
         , ...
-        ,generate_<function>_embedding(
-             fields
-            , ...
-            , ...
-        ) AS embedding_vector
-        ,384                    AS embedding_dimensions
-        ,CURRENT_TIMESTAMP      AS embedding_timestamp
-        ,created_at
-    ) 
-    from c_cdcsource.demog.<source table>;
+    ) AS embedding_vector
+    ,384                    AS embedding_dimensions
+    ,CURRENT_TIMESTAMP      AS embedding_timestamp
+    ,created_at
+) 
+from c_cdcsource.demog.<source table>;~
 ```
 
  
@@ -91,6 +91,50 @@ Thanks for following. Till next time.
 
   - Deploy catalog and tables `make deploy-fs`    -> Run Filesystem based version.
 
+
+**NOTE:** For the above deploy I ran into an interesting situation. As you will notice the `PostgreSQL` source table is created in the `c_cdcsource` catalog. Now that catalog is of type `generic in memory` as per **Apache Flink**. So whats so special about that, well, it’s session scoped, **ONLY**. This means whatever you create in the catalog is only available/visible for that session, during that session. 
+
+Ok. Now this means when we create the catalog, the source `PostgreSQL` reference, the UDF referencing the source table, well, they all have to be done in one session. So… how did we get around this, why is this a issue. Well we still want to compartmentalise our code, as in keep the catalog create in the catalog script, the CDC source table creates in their script and then the UDF separate as well as its registration. 
+
+Code duplication is also note a great idea, we want to re-use these bits.
+
+So at this point, I’m going to say, look at our `Makefile`, at the deploy: and deploy-fs: sections, and how they call `master:` or `master-fs:`, and how we use the “>” operator to build a `master.sql` or `master-fs.sql` script, which we then execute in `deploy:` or `deploy-fs:`. 
+
+There is still room for improvement here, but for now this worked.
+
+**MinIO/S3 based deployment**
+
+```bash
+# S3/Minio based  => Default
+master:
+	@echo "-- Generated MinIO/S3 master.sql" > ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/1.1.creCat.sql >> ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/3.1.creTargetFinflow.sql >> ./creFlinkFlows/master.sql
+	@cat ./creFlinkFlows/scripts/3.2.creTargetCmplx.sql >> ./creFlinkFlows/master.sql
+	@echo "✅ master.sql for MinIO/S3 generated"
+
+deploy: master
+	@echo "Deploying Paimon based Catalog with MinIO/S3 Storage..."
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master.sql
+```
+
+**File System based deployment**
+
+```bash
+# File System based
+master-fs:
+	@echo "-- Generated fs master.sql" > ./creFlinkFlows/master-fs.sql
+	@cat ./creFlinkFlows/scripts/1.1.creCat-fs.sql >> ./creFlinkFlows/master-fs.sql
+	@cat ./creFlinkFlows/scripts/3.1.creTargetFinflow.sql >> ./creFlinkFlows/master-fs.sql
+	@cat ./creFlinkFlows/scripts/3.2.creTargetCmplx.sql >> ./creFlinkFlows/master-fs.sql
+	@echo "✅ master-fs.sql for FS generated"
+
+deploy-fs: master-fs
+	@echo "Deploying Paimon based Catalog with Filesystem..."
+	docker compose exec --interactive --tty jobmanager /opt/flink/bin/sql-client.sh -f /creFlinkFlows/master-fs.sql
+```
+
+Let’s continue…
 
 - Deploy our PyFlink UDF
 
