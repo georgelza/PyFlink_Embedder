@@ -141,7 +141,7 @@ def generate_ah_embedding(target_dimensions
 
     
     except Exception as e:
-        logger.error(f"UDF Error: Ah processing record {processed_count}: {str(e)}", exc_info=True, file=sys.stderr)
+        logger.error(f"UDF Error: Ah processing record {processed_count}: {str(e)}", exc_info=True)
         # Return empty embedding on error instead of failing
         return [0.0] * target_dimensions
 

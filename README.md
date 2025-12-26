@@ -79,7 +79,7 @@ There is still room for improvement here, but for now this worked.
 
 **MinIO/S3 based deployment**
 
-The below is from our docker-compose.yaml and docker-compose-fs.yaml files
+The below is from our `docker-compose.yaml `and `docker-compose-fs.yaml` files
 
 ```bash
 # S3/Minio based  => Default
