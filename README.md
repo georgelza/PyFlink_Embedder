@@ -51,7 +51,7 @@ The stack allows for the Lakehouse tables to either be created on S3 Object stor
 <img src="blog-doc/diagrams/SuperLab-fs-v1.2.png" alt="Our Build" width="600">
 
 
-### Mebedding Vector
+### ebedding Vector
 
 For an example of how an embedding vector looks like, See: `<Project root>/misc/embedding.vector`
 
@@ -65,10 +65,15 @@ Also, the various deployment options, how to be able to tear things down, make a
 Did figure along the way to be open to making changes, from original plans. Hey we're in IT, accept change, invite change, adopt change.
 
 
-Now… At this point we have allot of options, for the purpose of the blog I wrote the outbound data stream into Apache Paimon. I could however just as easily have pushed this onto:
-- Apache Kafka Topic, processed it and then use their Connect framework to sink it into a target of choosing,
-- Mongo DB Collection
-- Into a Real time streaming storage platform like Apache Fluss (incubating), and from there utilised their Lakehouse tiering into Apache Paimon, Apache Iceberg or LanceDB.
+**Now**… At this point we have allot of options, for the purpose of the blog I wrote the outbound data stream into Apache Paimon. I could however just as easily have pushed this onto:
+
+- Into a Real time streaming storage platform like **[Apache Fluss (incubating)](https://fluss.apache.org)**, from there we can then take advantage the included Lakehouse tiering into **[Apache Paimon](https://paimon.apache.org)**, **[Apache Iceberg](https://iceberg.apache.org)** or **[LanceDB](https://lancedb.com)**, side track… why is this attractive, well it means all the work to get our data into a Lakehouse is taken care of for us, it also means we have sub second data freshness in our Apache Flink/Apache Fluss later, all with **Union Read** query capabilities into our Lakehouse tier.
+
+- Apache Kafka Topics, where we can further process the data and then utilise the **Kafka Connect** framework to sink it into a targets (Sink options) of choosing, i.e.: [Neo4J](https://neo4j.com) Graph based data store enabling Graph based Analytics.
+
+- [Mongo DB](https://www.mongodb.com/) Collection
+
+- … <many more>
 
 There are so many options that can be brought together.
 
